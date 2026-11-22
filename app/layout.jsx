@@ -1,10 +1,16 @@
 import './globals.css';
 import './mokra-v2.css';
+import './mokra-v4.css';
+
 export const metadata = {
-  title: { default: 'MOKRA — The Dark Remembers', template: '%s | MOKRA' },
-  description: 'MOKRA is a multiplayer VR adventure in development. Meet the creatures, explore what is coming, and connect your game account.',
+  title: { default: 'MOKRA — Into the Unknown', template: '%s | MOKRA' },
+  description: 'MOKRA is an atmospheric multiplayer VR game in development. Explore, survive, and link your VR account.',
   icons: { icon: '/favicon.svg' },
-  openGraph: { title: 'MOKRA — The Dark Remembers', description: 'Find your people. Follow the signal. Discover an original multiplayer VR adventure.', type: 'website' },
+  openGraph: {
+    title: 'MOKRA — Into the Unknown',
+    description: 'Arm-driven VR movement. An immersive world. An original interactive rainbow 3D character.',
+    type: 'website'
+  },
 };
 export default function RootLayout({ children }) {
   return <html lang="en"><body>{children}</body></html>;

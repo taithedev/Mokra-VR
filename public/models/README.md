@@ -1,14 +1,11 @@
-# Mokra's real player model
+# Mokra 3D Character / Rainbow Point Cloud
 
-The current page shows a procedural **stand-in** made to resemble the supplied front/side screenshots. Screenshots alone are not editable 3D models.
+The home page uses an original geometry approximation modeled from the user's screenshots: a pale legless creature, huge dark reflective eyes, long horizontal arms, three-finger hands, a pale belly and small mouth. The physical mesh remains visible under rainbow circular particles, with a separate downwards-falling spectrum rain effect. The model tracks the cursor.
 
-To switch to the *actual* game character:
+## Replacing the approximation with your real character
 
-1. In Blender, select the player character including its mesh, eyes, face, hands and materials.
-2. File > Export > glTF 2.0, format **GLB**, Apply Modifiers, +Y Up.
-3. Save the resulting binary as `public/models/mokra-player.glb` (exact path/name).
-4. Commit that file and deploy the website. The existing 3D scene automatically loads and samples the actual mesh, normalizes its size, and applies the animated rainbow/blue descending point-cloud effect.
+Export **your own** rig/mesh as binary glTF in Blender: **File > Export > glTF 2.0 (.glb)**. Export selected objects, apply transforms, and include materials. Name the file exactly **mokra-player.glb** and add it in this folder: **public/models/mokra-player.glb**. The website will then load your model and sample actual mesh surfaces for rainbow dots automatically.
 
-Avoid shipping private Unity game scripts, personal data, or third-party character meshes you do not have rights to.
+Keep the mesh facing the +Z direction and avoid exporting stage/camera/environment objects. The model is automatically recentered and normalized. Web preview and game model are separate; the Unity project retains the rigged master.
 
-GLB format is preferred over .blend, since browsers cannot load a .blend file directly. Keep exported material textures embedded in the GLB.
+The supplied screenshot is not a mesh or model file. Exact topology and texture matching require the original FBX/Blend/GLB file; this site does not copy GILLA's restricted model or other game assets.
