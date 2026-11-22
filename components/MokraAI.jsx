@@ -145,7 +145,7 @@ export default function MokraAI(){
        <span className={'mkai-voice-indicator'+(speaking?' speaking':'')}>
          <AudioLines size={14}/>{speaking?'Speaking now':busy?'Thinking...':'Your VR guide'}
        </span>
-       <p>A real Monki character answers your questions with voice and animated mouth movement.</p>
+       <p>Your Monki point-cloud guide speaks out loud, and its dot-mouth animates with each answer.</p>
      </div>
    </div>
    <div className="mkai-messages" ref={scrollRef} role="log" aria-live="polite" aria-label="Chat messages">

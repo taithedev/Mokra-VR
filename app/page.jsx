@@ -66,10 +66,11 @@ function Navigation() {
         <a href="#threats" onClick={close}>Threats</a>
         <a href="#locations" onClick={close}>World</a>
         <a href="#community" onClick={close}>People</a>
+        <button type="button" className="mk-nav-ai" onClick={()=>window.dispatchEvent(new Event('mokra:open-ai'))}>✳ Mokra AI</button>
         <Link className="mk-nav-get" href="/account">Account <ArrowUpRight size={12}/></Link>
       </nav>
       <button className="mk-mobile-menu" onClick={() => setMenu(v => !v)} aria-label={menu ? 'Close menu' : 'Open menu'} aria-expanded={menu}>{menu ? <X size={21}/> : <Menu size={21}/>}</button>
-      {menu && <nav className="mk-mobile-links" aria-label="Mobile navigation">{[['Move','#movement'],['Base','#base'],['Threats','#threats'],['World','#locations'],['People','#community']].map(([label,href])=><a key={href} href={href} onClick={close}>{label}</a>)}<Link href="/account" onClick={close}>Player account <ArrowUpRight size={15}/></Link></nav>}
+      {menu && <nav className="mk-mobile-links" aria-label="Mobile navigation">{[['Move','#movement'],['Base','#base'],['Threats','#threats'],['World','#locations'],['People','#community'],['Mokra AI','#ai']].map(([label,href])=><a key={href} href={href} onClick={close}>{label}</a>)}<Link href="/account" onClick={close}>Player account <ArrowUpRight size={15}/></Link></nav>}
     </header>
   </>;
 }
@@ -87,19 +88,29 @@ export default function Home() {
   useEffect(()=>{try{window.localStorage.setItem('mokra_preview_color',selectedColor);}catch{}},[selectedColor]);
   return <main className="mk-site" id="top" style={{'--mokra-accent':selectedColor}}>
     <Navigation/>
-    <section className="mk-hero" aria-labelledby="mk-hero-title">
+    <section className="mk-hero mk-hero-v8" aria-labelledby="mk-hero-title">
       <div className="mk-hero-grain"/>
-      <div className="mk-hero-model"><Character color={selectedColor} rainbow={particleMode==='rainbow'} density={particleDensity}/></div>
-      <div className="mk-real-model-mark" aria-label="Actual Monki 1 player model">MONKI / LIVE 3D <span>●</span> RAINBOW FUR + HOVER GLOW</div>
-      <div className="mk-hero-ghost"/>
-      <div className="mk-hero-content">
-        <p className="mk-pretitle">A WORLD JUST OUT OF SIGHT <span className="mk-pretitle-line"/> VR / IN DEVELOPMENT</p>
-        <h1 id="mk-hero-title" className="mk-wordmark">MOKRA<span className="mk-word-underline"/></h1>
-        <p className="mk-hero-caption">GO DEEPER. MEET YOUR MONKI. DON&apos;T LOOK BACK.</p>
-        <div className="mk-hero-cta"><Link className="mk-blue-button" href="/account">Make your account <ArrowUpRight size={16}/></Link><a className="mk-text-button" href="#movement">Discover the world <ArrowDown size={13}/></a></div>
-        <p className="mk-hero-status"><span/> MULTIPLAYER VR — CURRENTLY IN DEVELOPMENT</p>
+      <div className="mk-hero-layout">
+        <div className="mk-hero-copy">
+          <p className="mk-hero-eyebrow"><span className="mk-hero-online"/> ORIGINAL MULTIPLAYER VR PROJECT <span className="mk-pretitle-line"/> IN DEVELOPMENT</p>
+          <h1 id="mk-hero-title" className="mk-wordmark">MOKRA<span className="mk-word-underline"/></h1>
+          <p className="mk-hero-lead">A strange world. A familiar crew. A new way to move.</p>
+          <p className="mk-hero-description">Run, climb, explore, and discover what hides beyond the light. Meet your Monki and make it yours.</p>
+          <div className="mk-hero-cta">
+            <Link className="mk-blue-button" href="/account">Create your profile <ArrowUpRight size={17}/></Link>
+            <button type="button" className="mk-hero-ask-button" onClick={()=>window.dispatchEvent(new Event('mokra:open-ai'))}>Ask Mokra AI <Sparkles size={17}/></button>
+          </div>
+          <div className="mk-hero-pills"><span>✳ REAL 3D MONKI</span><span>◈ RAINBOW DOTS</span><span>◉ VR ACCOUNT LINKING</span></div>
+        </div>
+        <div className="mk-hero-stage">
+          <span className="mk-hero-stage-glow" aria-hidden="true"/>
+          <div className="mk-hero-model"><Character color={selectedColor} rainbow={particleMode==='rainbow'} density={particleDensity} variant="hero"/></div>
+          <div className="mk-hero-model-tag"><i/> MONKI 1 / GLOWING POINT CLOUD</div>
+          <div className="mk-hero-model-hint"><MousePointer2 size={15}/> HOVER OVER THE MONKI TO MAKE IT GLOW</div>
+          <div className="mk-hero-model-signal">001 / LIVE 3D</div>
+        </div>
       </div>
-      <div className="mk-hero-bottom"><span>001 / A WORLD WITH NO MAP</span><span><MousePointer2 size={14}/> HOVER OVER THE MODEL — MAKE IT GLOW</span><a href="#movement" aria-label="Scroll down"><ArrowDown size={19}/></a></div>
+      <div className="mk-hero-bottom"><span>YOUR WORLD STARTS HERE</span><span>ARMS FIRST. ADVENTURE NEXT.</span><a href="#movement" aria-label="Explore Mokra"><ArrowDown size={19}/></a></div>
     </section>
 
     <section className="mk-movement" id="movement">
@@ -129,14 +140,32 @@ export default function Home() {
 
     <section className="mk-people mk-section" id="community"><div className="mk-content"><Reveal className="mk-people-intro"><Kicker>05 / BETTER WITH OTHERS</Kicker><h2>Bring people.</h2><p>It&apos;s scarier together. It&apos;s also a lot more fun.</p></Reveal><div className="mk-feature-grid">{features.map(({icon:Icon,title,desc})=><article key={title}><Icon size={24} strokeWidth={1.4}/><h3>{title}</h3><p>{desc}</p></article>)}</div></div></section>
 
-    <section className="mk-customize mk-section" id="player"><div className="mk-content mk-customize-layout"><div className="mk-custom-model"><Character color={selectedColor} variant="mini" rainbow={particleMode==='rainbow'} density={particleDensity}/></div><Reveal className="mk-custom-content"><Kicker>06 / IT&apos;S YOU IN THERE</Kicker><h2>Pick your<br/><em>color.</em></h2><p>Make your Mokra unmistakably yours. Hover over any spot on your real Monki model to magnify it with a soft luminous bloom. The whole character now flows through rainbow colors.</p><div className="mk-colors" role="group" aria-label="Preview creature color">{APPEARANCE_COLORS.map(item=><button key={item.value} title={item.name} type="button" onClick={()=>setSelectedColor(item.value)} aria-label={`Choose ${item.name}`} aria-pressed={item.value===selectedColor} className={item.value===selectedColor?'active':''} style={{'--mk-color':item.value}}/>)}</div>
+    <section className="mk-customize mk-section" id="player"><div className="mk-content mk-customize-layout"><div className="mk-custom-model"><Character color={selectedColor} variant="mini" rainbow={particleMode==='rainbow'} density={particleDensity}/></div><Reveal className="mk-custom-content"><Kicker>06 / IT&apos;S YOU IN THERE</Kicker><h2>Pick your<br/><em>color.</em></h2><p>Your real Monki, rebuilt entirely from glowing dots. Every dot follows your actual 3D mesh, and rainbow colors flow from the top down. Hover to light up any spot.</p><div className="mk-colors" role="group" aria-label="Preview creature color">{APPEARANCE_COLORS.map(item=><button key={item.value} title={item.name} type="button" onClick={()=>setSelectedColor(item.value)} aria-label={`Choose ${item.name}`} aria-pressed={item.value===selectedColor} className={item.value===selectedColor?'active':''} style={{'--mk-color':item.value}}/>)}</div>
         <div className="mk-v6-color-edit"><label htmlFor="mk-color-custom">CUSTOM FUR COLOR</label><input id="mk-color-custom" aria-label="Choose a custom color" type="color" value={selectedColor} onChange={e=>setSelectedColor(e.target.value)}/><code>{selectedColor.toUpperCase()}</code></div>
         <div className="mk-v6-effects"><span>PARTICLE EFFECT</span><div role="group" aria-label="Particle effect"><button type="button" className={particleMode==='rainbow'?'chosen':''} aria-pressed={particleMode==='rainbow'} onClick={()=>setParticleMode('rainbow')}>Rainbow rain</button><button type="button" className={particleMode==='solid'?'chosen':''} aria-pressed={particleMode==='solid'} onClick={()=>setParticleMode('solid')}>Solid glow</button></div><label htmlFor="mk-density">DOT DENSITY · {particleDensity}</label><input id="mk-density" type="range" min="1" max="4" step="1" value={particleDensity} onChange={e=>setParticleDensity(Number(e.target.value))}/></div>
         <Link className="mk-blue-button" href="/account">Open player account <ArrowUpRight size={16}/></Link><small>Choose your appearance in your profile to save it in Neon and sync it with your game.</small></Reveal></div></section>
 
-    <section className="mk-faq mk-section"><div className="mk-content mk-faq-layout"><Reveal><Kicker>07 / THE BASICS</Kicker><h2>Before you<br/>head down.</h2></Reveal><div className="mk-faq-list">{faqs.map(([q,a],i)=><div className="mk-faq-item" key={q}><button onClick={()=>setOpenFaq(openFaq===i?-1:i)} aria-expanded={openFaq===i}><span>{String(i+1).padStart(2,'0')}</span>{q}<ChevronDown size={17} className={openFaq===i?'open':''}/></button>{openFaq===i&&<p>{a}</p>}</div>)}</div></div></section>
+    <section className="mk-ai-feature mk-section" id="ai">
+      <div className="mk-content mk-ai-feature-grid">
+        <div className="mk-ai-feature-copy">
+          <Kicker>07 / MEET YOUR VIRTUAL GUIDE</Kicker>
+          <h2>Got questions?<br/><em>Ask Mokra AI.</em></h2>
+          <p>Meet a little Monki that answers questions about the game, your account, and more. It can speak replies aloud, and its mouth moves while talking.</p>
+          <button type="button" className="mk-blue-button" onClick={()=>window.dispatchEvent(new Event('mokra:open-ai'))}>Talk to Mokra AI <Sparkles size={17}/></button>
+          <span>Powered by AI when connected · Offline game guide available</span>
+        </div>
+        <div className="mk-ai-feature-art" aria-hidden="true">
+          <div className="mk-ai-feature-orb">✳</div>
+          <div className="mk-ai-feature-bubble">Hey! Need help linking your headset?</div>
+          <div className="mk-ai-feature-line"><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/></div>
+          <small>KNOW THE WORLD. STAY CURIOUS.</small>
+        </div>
+      </div>
+    </section>
 
-    <section className="mk-end"><div className="mk-end-aura"/><div className="mk-content"><Reveal><Kicker>08 / UNTIL NEXT TIME</Kicker><h2>See you<br/><em>down there.</em></h2><p>Mokra is only getting started. Make a profile now and be ready when the doors open.</p><Link className="mk-blue-button" href="/account">Go to your profile <ArrowUpRight size={16}/></Link><div className="mk-end-down"><ArrowDown size={15}/> SCROLL TO LEARN MORE</div></Reveal></div></section>
+    <section className="mk-faq mk-section"><div className="mk-content mk-faq-layout"><Reveal><Kicker>08 / THE BASICS</Kicker><h2>Before you<br/>head down.</h2></Reveal><div className="mk-faq-list">{faqs.map(([q,a],i)=><div className="mk-faq-item" key={q}><button onClick={()=>setOpenFaq(openFaq===i?-1:i)} aria-expanded={openFaq===i}><span>{String(i+1).padStart(2,'0')}</span>{q}<ChevronDown size={17} className={openFaq===i?'open':''}/></button>{openFaq===i&&<p>{a}</p>}</div>)}</div></div></section>
+
+    <section className="mk-end"><div className="mk-end-aura"/><div className="mk-content"><Reveal><Kicker>09 / UNTIL NEXT TIME</Kicker><h2>See you<br/><em>down there.</em></h2><p>Mokra is only getting started. Make a profile now and be ready when the doors open.</p><Link className="mk-blue-button" href="/account">Go to your profile <ArrowUpRight size={16}/></Link><div className="mk-end-down"><ArrowDown size={15}/> SCROLL TO LEARN MORE</div></Reveal></div></section>
 
     <footer className="mk-footer"><div className="mk-content mk-footer-columns"><div><span className="mk-footer-logo">MOKRA<span>✳</span></span><p>A multiplayer VR adventure in development.<br/>Original art, creatures and ideas.</p></div><div><strong>EXPLORE</strong><a href="#movement">Movement</a><a href="#base">The base</a><a href="#threats">Creatures</a><a href="#locations">Locations</a></div><div><strong>ACCOUNT</strong><Link href="/account">Player portal</Link><Link href="/privacy">Privacy</Link><Link href="/terms">Terms</Link></div><div><strong>STATUS</strong><span>In development</span><span>Original concept</span><span>More to come</span></div></div><div className="mk-content mk-footer-bottom"><span>© {new Date().getFullYear()} MOKRA. ALL RIGHTS RESERVED.</span><span>UNOFFICIAL INDIE VR PROJECT · NOT AFFILIATED WITH GILLA</span><a href="#top">BACK TO TOP ↑</a></div></footer>
   </main>;

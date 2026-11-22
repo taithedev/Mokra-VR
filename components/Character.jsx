@@ -7,143 +7,73 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { MeshSurfaceSampler } from 'three/addons/math/MeshSurfaceSampler.js';
 
 const MODEL_PATH = '/models/mokra-player.glb';
+// The actual Mokra GLB is an invisible raycast surface. Its sampled points are the visible character.
 const SURFACE_VERTEX = `
   attribute float aRandom;
-  attribute float aFace;
+  attribute float aFeature;
+  attribute vec3 aNormal;
   uniform float uTime;
-  uniform float uSize;
-  uniform vec3 uHoverPoint;
+  uniform float uDotSize;
   uniform float uHoverStrength;
-  varying float vHover;
+  uniform vec3 uHoverPoint;
   varying float vHue;
-  varying float vFace;
-  varying float vTwinkle;
+  varying float vHover;
+  varying float vFeature;
+  varying float vSparkle;
   void main() {
     vec3 p = position;
-    p.x += sin(uTime * 1.8 + aRandom * 61.0) * .004;
-    p.y += sin(uTime * 1.4 + aRandom * 39.0) * .003;
-    vec3 worldPoint=(modelMatrix * vec4(p,1.0)).xyz;
-    vHover=uHoverStrength * exp(-pow(distance(worldPoint,uHoverPoint) / .39,2.0));
-    vHue = fract((worldPoint.y + 2.6) * .25 + uTime * .19);
-    vFace = aFace;
-    vTwinkle = .78 + .22 * sin(uTime * 3.2 + aRandom * 81.0);
-    vec4 mv = modelViewMatrix * vec4(p, 1.);
-    gl_Position = projectionMatrix * mv;
-    gl_PointSize = clamp((uSize / max(1., -mv.z)) * (1.0 + 3.8 * vHover), 1.4, 25.);
+    vec3 wp = (modelMatrix * vec4(p, 1.0)).xyz;
+    float proximity = exp(-pow(distance(wp,uHoverPoint)/.46,2.0));
+    vHover = uHoverStrength * proximity;
+    p += normalize(aNormal) * (.065 * vHover);
+    p.x += .003 * sin(uTime*1.9+aRandom*77.0);
+    p.y += .003 * cos(uTime*1.5+aRandom*49.0);
+    vHue = fract(.18 * wp.y + .11 * uTime);
+    vFeature = aFeature;
+    vSparkle = .78 + .22 * sin(uTime*2.8 + aRandom*39.0);
+    vec4 mv=modelViewMatrix*vec4(p,1.0);
+    gl_Position=projectionMatrix*mv;
+    float scale = vFeature>0.5 ? .84 : 1.0;
+    gl_PointSize=clamp(uDotSize*scale/max(-mv.z,1.0)*(1.0+2.9*vHover),1.5,15.0);
   }
 `;
 const SURFACE_FRAGMENT = `
   uniform vec3 uBaseColor;
   uniform float uSpectrum;
   varying float vHue;
-  varying float vFace;
-  varying float vTwinkle;
   varying float vHover;
-  vec3 rainbow(float h) {
-    return .22 + .78 * clamp(abs(fract(h + vec3(0., .66667, .33333)) * 6. - 3.) - 1., 0., 1.);
+  varying float vFeature;
+  varying float vSparkle;
+  vec3 spectrum(float h){
+    return .19 + .81 * clamp(abs(fract(h+vec3(0.,.666667,.333333))*6.-3.)-1.,0.,1.);
   }
-  void main() {
-    float r = length(gl_PointCoord - vec2(.5));
-    if (r > .5) discard;
-    float core = 1. - smoothstep(.05, .48, r);
-    vec3 color = mix(uBaseColor, rainbow(vHue), uSpectrum);
-    color=mix(color,vec3(1.0,.96,.99),clamp(vHover * .85,0.,.85));
-    color = mix(color, vec3(.92, .94, 1.), vFace * .88);
-    float alpha = core * vTwinkle * mix(.95, .38, vFace) * (1.0 + vHover*.3);
-    gl_FragColor = vec4(color * 1.65, alpha);
-  }
-`;
-const FALL_VERTEX = `
-  attribute float aSeed;
-  uniform float uTime;
-  varying float vHue;
-  varying float vGlow;
-  void main() {
-    vec3 p = position;
-    p.y = 3.15 - mod(3.15 - position.y + uTime * (.45 + aSeed * .9), 6.3);
-    p.x += sin(uTime * .48 + aSeed * 80.) * .075;
-    vHue = fract((p.y + 3.15) * .19 + uTime * .12 + aSeed * .08);
-    vGlow = .38 + aSeed * .62;
-    vec4 mv = modelViewMatrix * vec4(p,1.);
-    gl_Position = projectionMatrix * mv;
-    gl_PointSize = clamp((9. + 16. * aSeed) / max(1., -mv.z), 1., 3.9);
-  }
-`;
-const FALL_FRAGMENT = `
-  uniform float uSpectrum;
-  uniform vec3 uBaseColor;
-  varying float vHue;
-  varying float vGlow;
-  vec3 rainbow(float h) {
-    return .20 + .80 * clamp(abs(fract(h + vec3(0., .66667, .33333))*6. - 3.) - 1., 0., 1.);
-  }
-  void main() {
-    float r = length(gl_PointCoord - vec2(.5));
-    if(r > .5) discard;
-    float a = (1. - smoothstep(.08, .50, r)) * vGlow * .68;
-    gl_FragColor = vec4(mix(uBaseColor,rainbow(vHue),uSpectrum) * 1.6, a);
+  void main(){
+    float radius=length(gl_PointCoord-vec2(.5));
+    if(radius>.5)discard;
+    float core=1.0-smoothstep(.08,.32,radius);
+    float halo=1.0-smoothstep(.18,.5,radius);
+    vec3 color=mix(uBaseColor,spectrum(vHue),uSpectrum);
+    // Eyes and mouth are sampled from the user's real mesh, so their features remain legible.
+    if(vFeature>.5&&vFeature<1.5)color=vec3(.28,.43,.74);
+    if(vFeature>1.5)color=vec3(.93,.44,.67);
+    color=mix(color,vec3(1.,.97,1.),min(.8,vHover*.8));
+    float a=(core*.82+halo*.24)*vSparkle;
+    a*=1.0+vHover*.30;
+    gl_FragColor=vec4(color*(1.20+vHover*.65),min(a,1.0));
   }
 `;
 
-// Shader injection colors the real FBX-derived fur mesh, not just the surrounding dots.
-// The uniform hover center is a world-space point on the actual mesh surface.
-function applyMokraFurMaterial(mat,fx) {
-  if(!mat || !mat.isMeshStandardMaterial)return;
-  mat.color.set('#ffffff');
-  mat.side=THREE.DoubleSide;
-  mat.onBeforeCompile=(shader)=>{
-    shader.uniforms.uMokraTime=fx.time;
-    shader.uniforms.uMokraColor=fx.color;
-    shader.uniforms.uMokraRainbow=fx.rainbow;
-    shader.uniforms.uMokraHover=fx.hover;
-    shader.uniforms.uMokraStrength=fx.strength;
-    shader.vertexShader=shader.vertexShader.replace(
-      '#include <common>',
-      '#include <common>\nvarying vec3 vMokraWorld;\nuniform vec3 uMokraHover;\nuniform float uMokraStrength;'
-    ).replace(
-      '#include <begin_vertex>',
-      `#include <begin_vertex>
-      vec3 mkOriginalWorld=(modelMatrix*vec4(transformed,1.0)).xyz;
-      float mkGrow=uMokraStrength*exp(-pow(distance(mkOriginalWorld,uMokraHover)/.38,2.));
-      transformed+=normalize(objectNormal)*(.145*mkGrow);
-      vMokraWorld=(modelMatrix*vec4(transformed,1.0)).xyz;`
-    );
-    shader.fragmentShader=shader.fragmentShader.replace(
-      '#include <common>',
-      `#include <common>
-      varying vec3 vMokraWorld;
-      uniform float uMokraTime;
-      uniform vec3 uMokraColor;
-      uniform float uMokraRainbow;
-      uniform vec3 uMokraHover;
-      uniform float uMokraStrength;`
-    ).replace(
-      '#include <color_fragment>',
-      `#include <color_fragment>
-      float spectrum=fract(vMokraWorld.y*.28+uMokraTime*.13);
-      vec3 rgb=.17+.83*clamp(abs(fract(spectrum+vec3(0.,.666667,.333333))*6.-3.)-1.,0.,1.);
-      diffuseColor.rgb=mix(uMokraColor,rgb,uMokraRainbow);
-      float touch=uMokraStrength*exp(-pow(distance(vMokraWorld,uMokraHover)/.42,2.));
-      diffuseColor.rgb=mix(diffuseColor.rgb,vec3(1.,.96,.99),clamp(touch*.77,0.,.77));`
-    );
-  };
-  mat.customProgramCacheKey=()=> 'mokra-real-model-rainbow-hover-v7';
-  mat.needsUpdate=true;
-}
-function createGlowTexture() {
+function createGlowTexture(){
   if(typeof document==='undefined')return null;
-  const canvas=document.createElement('canvas');
-  canvas.width=canvas.height=128;
-  const ctx=canvas.getContext('2d');
-  if(!ctx)return null;
-  const gradient=ctx.createRadialGradient(64,64,3,64,64,64);
-  gradient.addColorStop(0,'rgba(255,255,255,1)');
-  gradient.addColorStop(.14,'rgba(255,255,255,.92)');
-  gradient.addColorStop(.35,'rgba(255,255,255,.35)');
-  gradient.addColorStop(1,'rgba(255,255,255,0)');
-  ctx.fillStyle=gradient;ctx.fillRect(0,0,128,128);
-  const texture=new THREE.CanvasTexture(canvas);
-  texture.colorSpace=THREE.SRGBColorSpace;
+  const canvas=document.createElement('canvas');canvas.width=canvas.height=128;
+  const ctx=canvas.getContext('2d');if(!ctx)return null;
+  const g=ctx.createRadialGradient(64,64,2,64,64,64);
+  g.addColorStop(0,'rgba(255,255,255,.96)');
+  g.addColorStop(.15,'rgba(255,255,255,.72)');
+  g.addColorStop(.42,'rgba(255,255,255,.2)');
+  g.addColorStop(1,'rgba(255,255,255,0)');
+  ctx.fillStyle=g;ctx.fillRect(0,0,128,128);
+  const texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.SRGBColorSpace;
   return texture;
 }
 
@@ -165,85 +95,83 @@ function normalizeModel(model) {
   return root;
 }
 
-function samplePoints(source,count=35000) {
+function samplePoints(source,count=40000) {
   source.updateMatrixWorld(true);
   const parts=[];
   let total=0;
   source.traverse(obj=>{
     if(!obj.isMesh || !obj.geometry?.attributes?.position)return;
-    // Keep the real glossy eye and mouth materials visible under the rainbow points.
-    if(/eye|mouth/i.test(String(obj.material?.name||'')+' '+obj.name))return;
     let sampler;
-    try {sampler=new MeshSurfaceSampler(obj).build();} catch {return;}
-    const scale=new THREE.Vector3();
-    obj.getWorldScale(scale);
+    try{sampler=new MeshSurfaceSampler(obj).build();}catch{return;}
+    const feature=obj.userData.mokraFeature||0;
     const bounds=new THREE.Box3().setFromObject(obj);
     const size=new THREE.Vector3();bounds.getSize(size);
-    const approx=Math.max(.003,size.x*size.y+size.y*size.z+size.z*size.x);
-    total+=approx; parts.push({obj,sampler,approx,cutoff:total});
+    const area=Math.max(.003,(size.x*size.y+size.y*size.z+size.z*size.x));
+    const weighted=area*(feature===1?5:feature===2?6:1);
+    total+=weighted;
+    parts.push({obj,sampler,feature,cutoff:total});
   });
   if(!parts.length)return null;
-  const rand=randomSeed(15110);
-  const pos=new Float32Array(count*3);
-  const seeds=new Float32Array(count),faces=new Float32Array(count);
-  const v=new THREE.Vector3(),normal=new THREE.Vector3();
+  const rnd=randomSeed(15110);
+  const position=new Float32Array(count*3);
+  const normal=new Float32Array(count*3);
+  const seed=new Float32Array(count);
+  const feature=new Float32Array(count);
+  const point=new THREE.Vector3(),surfaceNormal=new THREE.Vector3();
+  const normalMatrix=new THREE.Matrix3();
   for(let i=0;i<count;i++){
-    const target=rand()*total;
-    let part=parts.find(p=>p.cutoff>=target)||parts[parts.length-1];
-    part.sampler.sample(v,normal);
-    v.applyMatrix4(part.obj.matrixWorld);
-    pos[i*3]=v.x;pos[i*3+1]=v.y;pos[i*3+2]=v.z;
-    seeds[i]=rand();
-    faces[i]=part.obj.userData.faceMask===2?2:part.obj.userData.faceMask===1?1:0;
+    const target=rnd()*total;
+    // Binary search across cumulative surface area to keep large models efficient.
+    let lo=0,hi=parts.length-1;
+    while(lo<hi){const mid=(lo+hi)>>1;if(parts[mid].cutoff<target)lo=mid+1;else hi=mid;}
+    const part=parts[lo];
+    part.sampler.sample(point,surfaceNormal);
+    normalMatrix.getNormalMatrix(part.obj.matrixWorld);
+    surfaceNormal.applyMatrix3(normalMatrix).normalize();
+    point.applyMatrix4(part.obj.matrixWorld);
+    const index=i*3;
+    position[index]=point.x;position[index+1]=point.y;position[index+2]=point.z;
+    normal[index]=surfaceNormal.x;normal[index+1]=surfaceNormal.y;normal[index+2]=surfaceNormal.z;
+    feature[i]=part.feature;
+    seed[i]=rnd();
   }
-  const g=new THREE.BufferGeometry();
-  g.setAttribute('position',new THREE.BufferAttribute(pos,3));
-  g.setAttribute('aRandom',new THREE.BufferAttribute(seeds,1));
-  g.setAttribute('aFace',new THREE.BufferAttribute(faces,1));
-  g.computeBoundingSphere();
-  return g;
-}
-
-function RainbowRain({small=false,paused=false,rainbow=true,color='#476bff'}) {
-  const mat=useRef(null);
-  const geo=useMemo(()=>{
-    const rand=randomSeed(91232),count=small?850:3300;
-    const pts=new Float32Array(count*3),seeds=new Float32Array(count);
-    for(let i=0;i<count;i++){
-      pts[i*3]=(rand()-.5)*8.2;
-      pts[i*3+1]=(rand()-.5)*6.3;
-      pts[i*3+2]=-1.35+(rand()-.5)*3.5;
-      seeds[i]=rand();
-    }
-    const geometry=new THREE.BufferGeometry();
-    geometry.setAttribute('position',new THREE.BufferAttribute(pts,3));
-    geometry.setAttribute('aSeed',new THREE.BufferAttribute(seeds,1));
-    return geometry;
-  },[small]);
-  useEffect(()=>()=>geo.dispose(),[geo]);
-  const uniforms=useMemo(()=>({uTime:{value:0},uSpectrum:{value:1},uBaseColor:{value:new THREE.Color('#476bff')}}),[]);
-  useEffect(()=>{uniforms.uSpectrum.value=rainbow?1:0;uniforms.uBaseColor.value.set(color);},[rainbow,color,uniforms]);
-  useFrame(({clock})=>{if(mat.current&&!paused)mat.current.uniforms.uTime.value=clock.elapsedTime;});
-  return <points geometry={geo} frustumCulled={false}>
-    <shaderMaterial ref={mat} uniforms={uniforms} vertexShader={FALL_VERTEX} fragmentShader={FALL_FRAGMENT} transparent depthWrite={false} blending={THREE.AdditiveBlending}/>
-  </points>;
+  const geo=new THREE.BufferGeometry();
+  geo.setAttribute('position',new THREE.BufferAttribute(position,3));
+  geo.setAttribute('aNormal',new THREE.BufferAttribute(normal,3));
+  geo.setAttribute('aRandom',new THREE.BufferAttribute(seed,1));
+  geo.setAttribute('aFeature',new THREE.BufferAttribute(feature,1));
+  geo.computeBoundingSphere();
+  return geo;
 }
 
 function TalkingMouth({anchor,speaking,paused}){
-  const cavity=useRef(null),intensity=useRef(0);
+  const mouth=useRef(null);
+  const opening=useRef(0);
+  const geometry=useMemo(()=>{
+    const count=240,positions=new Float32Array(count*3);
+    for(let i=0;i<count;i++){
+      const angle=(i/count)*Math.PI*2;
+      const radius=1+(i%3)*.027;
+      positions[i*3]=Math.cos(angle)*radius;
+      positions[i*3+1]=Math.sin(angle)*radius;
+      positions[i*3+2]=0;
+    }
+    const g=new THREE.BufferGeometry();
+    g.setAttribute('position',new THREE.BufferAttribute(positions,3));
+    return g;
+  },[]);
+  useEffect(()=>()=>geometry.dispose(),[geometry]);
   useFrame(({clock},dt)=>{
-    if(!cavity.current)return;
-    const rhythmic=paused?.58:(.55+.45*Math.abs(Math.sin(clock.elapsedTime*12.5)));
-    const goal=speaking?Math.max(.20,rhythmic):0;
-    intensity.current=THREE.MathUtils.damp(intensity.current,goal,14,dt);
-    cavity.current.visible=intensity.current>.025;
-    cavity.current.scale.set(.115,.012+.18*intensity.current,.026);
-    cavity.current.material.opacity=Math.min(1,intensity.current*1.2);
+    if(!mouth.current)return;
+    const t=clock.elapsedTime;
+    const target=speaking ? (paused?.7:(.55+.45*Math.abs(Math.sin(t*11.8)))) : 0;
+    opening.current=THREE.MathUtils.damp(opening.current,target,14,dt);
+    mouth.current.visible=opening.current>.025;
+    mouth.current.scale.set(.13,.008+.16*opening.current,1);
   });
-  return <mesh ref={cavity} position={anchor} visible={false} renderOrder={6}>
-    <sphereGeometry args={[1,24,20]}/>
-    <meshBasicMaterial color="#290e20" transparent opacity={0} depthWrite={false}/>
-  </mesh>;
+  return <points ref={mouth} geometry={geometry} position={anchor} visible={false} renderOrder={7}>
+    <pointsMaterial color="#f5b5da" size={.042} sizeAttenuation transparent opacity={.95} depthWrite={false} blending={THREE.AdditiveBlending}/>
+  </points>;
 }
 
 function Stage({color,variant,rainbow=true,density=2,speaking=false,paused=false,onLoaded,onError}) {
@@ -265,28 +193,33 @@ function Stage({color,variant,rainbow=true,density=2,speaking=false,paused=false
     loader.load(MODEL_PATH,(gltf)=>{
       if(!active)return;
       const actualModel=normalizeModel(gltf.scene);
+      let mouthBounds=null;
       actualModel.traverse(object=>{
         if(!object.isMesh)return;
-        object.castShadow=true;
-        object.receiveShadow=true;
-        if(object.material){
-          object.material=Array.isArray(object.material)?object.material.map(m=>m.clone()):object.material.clone();
-          for(const mat of (Array.isArray(object.material)?object.material:[object.material])){
-            const identity=(String(object.name)+' '+String(mat.name)).toLowerCase();
-            const isFace=/eye|pupil|cornea|mouth|teeth|tongue/.test(identity);
-            if(!isFace && (/fur|body|arm|hand|monki/.test(identity) || identity.trim()==='')){
-              applyMokraFurMaterial(mat,fx);
-            } else {mat.side=THREE.DoubleSide;mat.needsUpdate=true;}
+        const materialName=Array.isArray(object.material)
+          ?object.material.map(m=>m.name).join(' ')
+          :String(object.material?.name||'');
+        const identity=(String(object.name)+' '+materialName).toLowerCase();
+        const feature=/mouth|teeth|tongue/.test(identity)?2:/eye|pupil|cornea/.test(identity)?1:0;
+        object.userData.mokraFeature=feature;
+        if(feature===2){
+          const box=new THREE.Box3().setFromObject(object);
+          if(!box.isEmpty()){
+            if(!mouthBounds)mouthBounds=box;
+            else mouthBounds.union(box);
           }
         }
+        // Hide the original triangles in the color/depth buffers, but retain their
+        // exact geometry for raycasting and surface-sampling. No copied/ripped GILLA mesh.
+        object.castShadow=false;
+        object.receiveShadow=false;
+        object.material=new THREE.MeshBasicMaterial({
+          colorWrite:false,depthWrite:false,side:THREE.DoubleSide
+        });
       });
-      const mouth=actualModel.getObjectByName('Monki Mouth')||actualModel.getObjectByName('mesh_Mouth');
-      if(mouth){
-        const bbox=new THREE.Box3().setFromObject(mouth);
-        if(!bbox.isEmpty()){
-          const middle=bbox.getCenter(new THREE.Vector3());
-          setMouthAnchor([middle.x,middle.y,bbox.max.z+.019]);
-        }
+      if(mouthBounds){
+        const middle=mouthBounds.getCenter(new THREE.Vector3());
+        setMouthAnchor([middle.x,middle.y,mouthBounds.max.z+.020]);
       }
       setLoaded(actualModel);
       onLoaded?.(true);
@@ -297,13 +230,15 @@ function Stage({color,variant,rainbow=true,density=2,speaking=false,paused=false
       }
     });
     return ()=>{active=false;};
-  },[onLoaded,onError,fx]);
+  },[onLoaded,onError]);
   const model=loaded;
-  const points=useMemo(()=>model?samplePoints(model,(variant==='mini'||variant==='assistant'?2600:12000)*density):null,[model,variant,density]);
+  const points=useMemo(()=>model?samplePoints(model,
+    (variant==='assistant'?7200:variant==='mini'?12000:variant==='portrait'?21000:26000)*density
+  ):null,[model,variant,density]);
   useEffect(()=>()=>points?.dispose(),[points]);
   const uniforms=useMemo(()=>({
     uTime:{value:0},uBaseColor:{value:new THREE.Color('#476bff')},
-    uSpectrum:{value:1},uSize:{value:25},
+    uSpectrum:{value:1},uDotSize:{value:24},
     uHoverPoint:fx.hover,uHoverStrength:fx.strength
   }),[fx]);
   useEffect(()=>{
@@ -331,9 +266,10 @@ function Stage({color,variant,rainbow=true,density=2,speaking=false,paused=false
     if(camera.isPerspectiveCamera && size.width>0 && size.height>0){
       const aspect=size.width/size.height;
       const fitWidth=5.85/(2*Math.tan(THREE.MathUtils.degToRad(camera.fov/2))*Math.max(.38,aspect));
-      const desiredDistance=Math.max(variant==='assistant'?7.9:8.2,fitWidth*1.09);
+      const desiredDistance=variant==='assistant'?4.9:Math.max(8.2,fitWidth*1.09);
       camera.position.z=THREE.MathUtils.damp(camera.position.z,desiredDistance,6,dt);
-      camera.lookAt(0,0,0);
+      camera.position.y=THREE.MathUtils.damp(camera.position.y,variant==='assistant'?.52:0,6,dt);
+      camera.lookAt(0,variant==='assistant'?.52:0,0);
     }
     const time=paused?0:clock.elapsedTime;
     fx.time.value=time;
@@ -367,8 +303,7 @@ function Stage({color,variant,rainbow=true,density=2,speaking=false,paused=false
     <directionalLight position={[2.3,4.5,5]} intensity={2.4}/>
     <directionalLight position={[-4,1,-3]} color="#335bff" intensity={1.2}/>
     <pointLight position={[0,-1,3]} color="#8f56ff" intensity={.8}/>
-    {variant!=='assistant'&&<RainbowRain small={variant==='mini'} paused={paused} rainbow={rainbow} color={color}/>}
-    <group ref={group} scale={variant==='mini'?.92:1}>
+      <group ref={group} scale={variant==='mini'?.92:1}>
       {model&&<primitive object={model}/>}
       {model&&variant==='assistant'&&<TalkingMouth anchor={mouthAnchor} speaking={speaking} paused={paused}/>}
       {points&&<points geometry={points} frustumCulled={false}>
@@ -391,7 +326,7 @@ export default function Character({color='#476bff',variant='hero',rainbow=true,d
     sync();q.addEventListener?.('change',sync);
     return ()=>q.removeEventListener?.('change',sync);
   },[]);
-  return <div className={'mk-character mk-character--'+variant} role="img" aria-label="Real Mokra 3D player model with rainbow fur and a magnified luminous glow where you hover">
+  return <div className={'mk-character mk-character--'+variant} role="img" aria-label="The real Mokra Monki player model rendered entirely as thousands of glowing rainbow dots with cursor hover effects">
     <Canvas dpr={variant==='assistant'?[1,1.25]:[1,1.5]} gl={{alpha:true,antialias:true,powerPreference:'high-performance'}} camera={{position:[0,.18,8.8],fov:39}} frameloop="always">
       <Stage color={color} variant={variant} rainbow={rainbow} density={density} speaking={speaking} paused={reduced} onLoaded={setReady} onError={setLoadError}/>
     </Canvas>
