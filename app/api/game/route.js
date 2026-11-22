@@ -1,4 +1,4 @@
-import { query, json, currentUser, digest, randomToken, rateLimit, publicUser } from '@/lib/server';
+import { query, json, currentUser, digest, randomToken, rateLimit, publicUser, verifyOrigin } from '@/lib/server';
 import { randomInt } from 'node:crypto';
 export const runtime='nodejs';
 const ALPHABET='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -29,6 +29,7 @@ export async function POST(request){
    return json({status:'linked',accessToken:token,expiresIn:7776000});
   }
   if(action==='approve'){
+   if(!verifyOrigin(request))return json({error:'Request origin not allowed.'},403);
    if(!(await rateLimit('game-approve',8)))return json({error:'Too many attempts.'},429);
    const user=await currentUser();if(!user)return json({error:'Sign in first.'},401);
    const pairingCode=String(b.code||'').toUpperCase().replace(/[\s-]/g,'');
@@ -41,11 +42,12 @@ export async function POST(request){
    if(!(await rateLimit('game-profile',100)))return json({error:'Too many requests.'},429);
    const token=request.headers.get('authorization')?.replace(/^Bearer\s+/i,'')||'';
    if(token.length<32||token.length>128)return json({error:'Unauthorized.'},401);
-   const rows=await query('SELECT a.id,a.username,a.display_name,a.fur_color,a.level,a.total_runs,a.shards,a.created_at FROM mokra_game_sessions s JOIN mokra_accounts a ON s.account_id=a.id WHERE s.token_hash=$1 AND s.revoked_at IS NULL AND s.expires_at>now() LIMIT 1',[digest(token)]);
+   const rows=await query('SELECT a.id,a.username,a.display_name,a.fur_color,a.particle_mode,a.particle_density,a.level,a.total_runs,a.shards,a.created_at FROM mokra_game_sessions s JOIN mokra_accounts a ON s.account_id=a.id WHERE s.token_hash=$1 AND s.revoked_at IS NULL AND s.expires_at>now() LIMIT 1',[digest(token)]);
    if(!rows.length)return json({error:'Session expired or revoked.'},401);
    return json({user:publicUser(rows[0])});
   }
   if(action==='revoke'){
+   if(!verifyOrigin(request))return json({error:'Request origin not allowed.'},403);
    if(!(await rateLimit('game-revoke',20)))return json({error:'Too many attempts.'},429);
    const user=await currentUser();if(!user)return json({error:'Not signed in.'},401);
    if(!/^[0-9a-f-]{36}$/i.test(String(b.sessionId||'')))return json({error:'Invalid session.'},400);

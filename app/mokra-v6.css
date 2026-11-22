@@ -1,0 +1,80 @@
+@import url('https://fonts.googleapis.com/css2?family=Sniglet:wght@400;800&display=swap');
+
+/* MOKRA V6 — playful Sniglet UI, original marker-style MOKRA hero retained */
+:root{
+  --body:'Sniglet',system-ui,sans-serif;
+  --title:'Sniglet',system-ui,sans-serif;
+  --display:'Sniglet',system-ui,sans-serif;
+  --lime:#719cff;
+  --font-mokra:'Sniglet',system-ui,sans-serif;
+}
+body,button,input,textarea,select{font-family:var(--font-mokra)}
+.mk-site{--electric:var(--mokra-accent,#476bff);--electric2:var(--mokra-accent,#476bff)}
+.mk-site :is(p,span,small,button,a,label,code,input),.portal-page :is(p,span,small,button,a,label,code,input){font-family:var(--font-mokra)}
+.mk-site :is(h2,h3),.portal-page :is(h1,h2,h3){font-family:var(--font-mokra);font-weight:800;letter-spacing:-.025em;line-height:1.08}
+.mk-site :is(h2){font-size:clamp(48px,6.7vw,98px);overflow-wrap:break-word}
+.mk-site .mk-wordmark{font-family:'Permanent Marker',Impact,'Arial Black',sans-serif!important;letter-spacing:-.075em}
+.mk-footer-logo{font-family:var(--font-mokra)}
+.mk-site .mk-blue-button,.mk-site .mk-nav-get{background:linear-gradient(135deg,color-mix(in srgb,var(--mokra-accent,#476bff) 78%,white),var(--mokra-accent,#476bff));box-shadow:0 8px 29px color-mix(in srgb,var(--mokra-accent,#476bff) 38%,transparent)}
+.mk-site .mk-blue-button:hover,.mk-site .mk-nav-get:hover{filter:brightness(1.14)}
+.mk-site .mk-hero-ghost{background:radial-gradient(circle,color-mix(in srgb,var(--mokra-accent,#476bff) 25%,transparent),transparent 69%)}
+.mk-site .mk-kicker i{background:var(--mokra-accent,#476bff)}
+.mk-site .mk-progress{background:linear-gradient(90deg,#fd6383,#ffcc54,#8bf08e,#4bb8ff,#ac7dff)}
+.mk-site .mk-colors{gap:13px;margin-bottom:12px}
+.mk-site .mk-colors button{border:2px solid #ffffff30;border-radius:999px;min-width:36px;min-height:36px;box-shadow:0 4px 18px #0006}
+.mk-site .mk-colors button:hover{transform:translateY(-3px) scale(1.06)}
+.mk-site .mk-colors button.active{outline:2px solid #fff;outline-offset:4px;box-shadow:0 0 26px var(--mk-color)}
+.mk-v6-color-edit{display:flex;align-items:center;gap:12px;margin:25px 0;color:#d7e3ff;font-size:12px;letter-spacing:.02em}
+.mk-v6-color-edit label{font-weight:800;flex:1}
+.mk-v6-color-edit input{width:54px;height:42px;border:1px solid #ffffff38;border-radius:10px;background:#14182a;padding:4px;cursor:pointer}
+.mk-v6-color-edit code{font-family:var(--font-mokra);font-size:12px;color:#d5dff1}
+.mk-v6-effects{padding:18px;border-radius:18px;background:#0e1422e0;border:1px solid #65739844;display:grid;gap:13px;margin-bottom:24px;max-width:420px}
+.mk-v6-effects span,.mk-v6-effects label{font-size:12px;color:#d6e5ff}
+.mk-v6-effects>div,.mk-v6-mode-row{display:flex;gap:8px;flex-wrap:wrap}
+.mk-v6-effects button,.mk-v6-mode-row button{background:#121a2e;border:1px solid #667ba44b;color:#b9c9ec;border-radius:11px;padding:9px 15px;min-height:40px;font-size:13px}
+.mk-v6-effects button.chosen,.mk-v6-mode-row button.chosen{border-color:#9ac3ff;color:#fff;background:#253c75}
+.mk-v6-effects input[type=range],.mk-v6-account-controls input[type=range]{accent-color:var(--mokra-accent,#648fff);width:100%;min-height:24px}
+.mk-v6-account-controls{display:grid;gap:14px;margin:12px 0 20px;padding:16px;background:#101b30;border:1px solid #354c79;border-radius:13px}
+.mk-v6-account-controls>span{font-size:12px}
+.mk-v6-account-controls label{font-size:12px;display:grid;gap:10px}
+.mk-v6-custom-label{display:flex!important;flex-direction:row!important;align-items:center;justify-content:space-between;font-size:12px}
+.mk-v6-custom-label input{width:70px!important;min-height:46px}
+.portal-page{--bg:#060a15;--panel:#10182a;--border:#2b416d;--lime:#719cff;background:radial-gradient(ellipse at 80% 5%,#172c58,transparent 45%),#070a13}
+.portal-page .portal-panel{background:#101929;border:1px solid #34466e;border-radius:20px}
+.portal-page .portal-aside{background:linear-gradient(145deg,#172b52,#080e1e);border-radius:20px;border-color:#344d80}
+.portal-page .aside-orbit{border-color:#6b9bff55}
+.portal-page .portal-nav,.portal-page .portal-footer{border-color:#344568}
+.portal-page .stack input,.portal-page .link-form input{background:#080f1c;color:#fff;border:1px solid #455d85;border-radius:10px}
+.portal-page .auth-switch{background:#0a1324;border:1px solid #344c7c;border-radius:14px}
+.portal-page .auth-switch button{border-radius:11px}
+.portal-page .auth-switch button.selected{background:#234474;color:#fff}
+.portal-page .primary{border-radius:10px;background:#497ff7;color:white}
+.portal-page .primary:hover{background:#75a0ff}
+.portal-page .stat-grid>div,.portal-page .small-model,.portal-page .session{background:#0a1425;border-color:#304b79;border-radius:14px}
+.portal-page .stat-grid b{color:#90b4ff}
+.portal-page .profile-grid,.portal-page .dashboard-section{border-color:#35486c}
+.portal-page .color-grid{gap:10px}
+.portal-page .color-button{border-radius:999px;border:3px solid #192849;outline:1px solid #526999}
+.portal-page .color-button.chosen{outline:2px solid white;outline-offset:3px}
+.portal-page .outline-button{border-color:#4566a3;border-radius:10px;color:#e0ebff}
+.portal-page .danger-zone{border-radius:14px}
+.mk-v6-service-error{padding:15px;display:flex;align-items:flex-start;gap:12px;margin-bottom:16px;background:#32251b;color:#ffe3c6;border:1px solid #a57646;border-radius:14px}
+.mk-v6-service-error svg{flex-shrink:0}
+.mk-v6-service-error b{font-size:12px}
+.mk-v6-service-error p{font-size:12px;line-height:1.5;color:#ffe0c4}
+.mk-v6-service-error button{padding:8px 14px;border:1px solid #dcae78;background:#6f402b;color:#fff;border-radius:8px}
+.mk-v6-security{background:#0d1a2e;padding:24px;border-radius:13px}
+.mk-site .mk-customize{overflow:visible}
+@media(max-width:780px){
+ .mk-site :is(h2){font-size:clamp(40px,10vw,72px)}
+ .mk-site .mk-movement h2{font-size:clamp(47px,11vw,78px)}
+ .mk-v6-effects{max-width:100%}
+ .portal-page .portal-panel{padding:18px}
+}
+@media(max-width:480px){
+ .mk-v6-color-edit{flex-wrap:wrap}
+ .mk-v6-security{padding:15px}
+ .mk-v6-effects>div{flex-direction:column}
+ .mk-v6-effects button{width:100%}
+ .portal-page .profile-grid{grid-template-columns:1fr}
+}

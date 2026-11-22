@@ -63,6 +63,8 @@ const FALL_VERTEX = `
   }
 `;
 const FALL_FRAGMENT = `
+  uniform float uSpectrum;
+  uniform vec3 uBaseColor;
   varying float vHue;
   varying float vGlow;
   vec3 rainbow(float h) {
@@ -72,7 +74,7 @@ const FALL_FRAGMENT = `
     float r = length(gl_PointCoord - vec2(.5));
     if(r > .5) discard;
     float a = (1. - smoothstep(.08, .50, r)) * vGlow * .68;
-    gl_FragColor = vec4(rainbow(vHue) * 1.6, a);
+    gl_FragColor = vec4(mix(uBaseColor,rainbow(vHue),uSpectrum) * 1.6, a);
   }
 `;
 
@@ -133,7 +135,7 @@ function samplePoints(source,count=35000) {
   return g;
 }
 
-function RainbowRain({small=false,paused=false}) {
+function RainbowRain({small=false,paused=false,rainbow=true,color='#476bff'}) {
   const mat=useRef(null);
   const geo=useMemo(()=>{
     const rand=randomSeed(91232),count=small?850:3300;
@@ -150,14 +152,15 @@ function RainbowRain({small=false,paused=false}) {
     return geometry;
   },[small]);
   useEffect(()=>()=>geo.dispose(),[geo]);
-  const uniforms=useMemo(()=>({uTime:{value:0}}),[]);
+  const uniforms=useMemo(()=>({uTime:{value:0},uSpectrum:{value:1},uBaseColor:{value:new THREE.Color('#476bff')}}),[]);
+  useEffect(()=>{uniforms.uSpectrum.value=rainbow?1:0;uniforms.uBaseColor.value.set(color);},[rainbow,color,uniforms]);
   useFrame(({clock})=>{if(mat.current&&!paused)mat.current.uniforms.uTime.value=clock.elapsedTime;});
   return <points geometry={geo} frustumCulled={false}>
     <shaderMaterial ref={mat} uniforms={uniforms} vertexShader={FALL_VERTEX} fragmentShader={FALL_FRAGMENT} transparent depthWrite={false} blending={THREE.AdditiveBlending}/>
   </points>;
 }
 
-function Stage({color,variant,rainbow=true,paused=false,onLoaded,onError}) {
+function Stage({color,variant,rainbow=true,density=2,paused=false,onLoaded,onError}) {
   const group=useRef(null),dots=useRef(null);
   const move=useRef({x:0,y:0});
   const [loaded,setLoaded]=useState(null);
@@ -172,8 +175,10 @@ function Stage({color,variant,rainbow=true,paused=false,onLoaded,onError}) {
         object.castShadow=true;
         object.receiveShadow=true;
         if(object.material){
-          object.material.side=THREE.DoubleSide;
-          object.material.needsUpdate=true;
+          object.material=Array.isArray(object.material)?object.material.map(m=>m.clone()):object.material.clone();
+          for(const mat of (Array.isArray(object.material)?object.material:[object.material])){
+            mat.side=THREE.DoubleSide;mat.needsUpdate=true;
+          }
         }
       });
       setLoaded(actualModel);
@@ -187,7 +192,20 @@ function Stage({color,variant,rainbow=true,paused=false,onLoaded,onError}) {
     return ()=>{active=false;};
   },[onLoaded,onError]);
   const model=loaded;
-  const points=useMemo(()=>model?samplePoints(model,variant==='mini'?10500:27000):null,[model,variant]);
+  useEffect(()=>{
+    if(!model)return;
+    const tint=new THREE.Color(color||'#476bff');
+    model.traverse(object=>{
+      if(!object.isMesh||!object.material)return;
+      const mats=Array.isArray(object.material)?object.material:[object.material];
+      for(const mat of mats){
+        const identity=(String(object.name)+' '+String(mat.name)).toLowerCase();
+        if(/eyes?|mouth|pupil|cornea|teeth|tongue/.test(identity))continue;
+        if(mat.color && (identity.includes('fur')||identity.includes('body')||identity.includes('arm')||identity.includes('hand')||identity.includes('monki')))mat.color.copy(tint);
+      }
+    });
+  },[model,color]);
+  const points=useMemo(()=>model?samplePoints(model,variant==='mini'?4000*density:12000*density):null,[model,variant,density]);
   useEffect(()=>()=>points?.dispose(),[points]);
   const uniforms=useMemo(()=>({uTime:{value:0},uBaseColor:{value:new THREE.Color('#517aff')},uSpectrum:{value:1},uSize:{value:25}}),[]);
   useEffect(()=>{
@@ -217,7 +235,7 @@ function Stage({color,variant,rainbow=true,paused=false,onLoaded,onError}) {
     <directionalLight position={[2.3,4.5,5]} intensity={2.4}/>
     <directionalLight position={[-4,1,-3]} color="#335bff" intensity={1.2}/>
     <pointLight position={[0,-1,3]} color="#8f56ff" intensity={.8}/>
-    <RainbowRain small={variant==='mini'} paused={paused}/>
+    <RainbowRain small={variant==='mini'} paused={paused} rainbow={rainbow} color={color}/>
     <group ref={group} scale={variant==='mini'?.92:1}>
       {model&&<primitive object={model}/>}
       {points&&<points geometry={points} frustumCulled={false}>
@@ -227,7 +245,7 @@ function Stage({color,variant,rainbow=true,paused=false,onLoaded,onError}) {
   </>;
 }
 
-export default function Character({color='#507cff',variant='hero',rainbow=true}) {
+export default function Character({color='#476bff',variant='hero',rainbow=true,density=2}) {
   const [reduced,setReduced]=useState(false);
   const [ready,setReady]=useState(false);
   const [loadError,setLoadError]=useState(false);
@@ -239,7 +257,7 @@ export default function Character({color='#507cff',variant='hero',rainbow=true})
   },[]);
   return <div className={'mk-character mk-character--'+variant} role="img" aria-label="Interactive long-armed Mokra creature covered in descending rainbow light dots">
     <Canvas dpr={[1,1.5]} gl={{alpha:true,antialias:true,powerPreference:'high-performance'}} camera={{position:[0,.18,variant==='mini'?8.7:7.6],fov:39}} frameloop="always">
-      <Stage color={color} variant={variant} rainbow={rainbow} paused={reduced} onLoaded={setReady} onError={setLoadError}/>
+      <Stage color={color} variant={variant} rainbow={rainbow} density={density} paused={reduced} onLoaded={setReady} onError={setLoadError}/>
     </Canvas>
     {!ready&&!loadError&&<div className="mk-model-loadstate" role="status"><span className="mk-model-loadspinner"/>LOADING REAL MOKRA MODEL</div>}
     {loadError&&<div className="mk-model-loadstate" role="alert">MODEL COULD NOT LOAD · CHECK ASSET PATH</div>}

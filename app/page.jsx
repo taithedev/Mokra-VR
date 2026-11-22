@@ -3,10 +3,11 @@
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { useEffect, useRef, useState } from 'react';
+import { APPEARANCE_COLORS } from '@/lib/appearance';
 import { ArrowDown, ArrowRight, ArrowUpRight, ChevronDown, ChevronLeft, ChevronRight, Compass, Fingerprint, Headphones, LockKeyhole, Menu, Mic2, MousePointer2, RadioTower, ShieldCheck, Sparkles, Users, Volume2, X } from 'lucide-react';
 
 const Character = dynamic(() => import('@/components/Character'), { ssr: false, loading: () => <div className="mk-model-loader">ASSEMBLING SIGNAL...</div> });
-const palette = ['#476bff', '#8b56ff', '#f0f0ff', '#ff6a95', '#25d7cf', '#eac96c'];
+const palette = APPEARANCE_COLORS.map(({value})=>value);
 const threats = [
   { name: 'The Hush', label: 'BENEATH THE STATION', number:'01', image:'/scenes/hush.svg', text:'It never has to run. It waits where the lights forget to reach. Keep moving and do not follow the knocking.' },
   { name: 'The Sentry', label: 'WITHIN THE SIGNAL', number:'02', image:'/scenes/sentry.svg', text:'Always watching the same hallway. Until it isn’t. Listen for the static before you turn a corner.' },
@@ -77,13 +78,17 @@ function Kicker({ children }) { return <span className="mk-kicker"><i/>{children
 export default function Home() {
   const [selectedThreat, setSelectedThreat] = useState(0);
   const [selectedColor, setSelectedColor] = useState(palette[0]);
+  const [particleMode,setParticleMode]=useState('rainbow');
+  const [particleDensity,setParticleDensity]=useState(2);
   const [openFaq, setOpenFaq] = useState(-1);
-  const threat = threats[selectedThreat];
-  return <main className="mk-site" id="top">
+  const threat=threats[selectedThreat];
+  useEffect(()=>{try{const value=window.localStorage.getItem('mokra_preview_color');if(value&&/^#[0-9a-fA-F]{6}$/.test(value))setSelectedColor(value);}catch{}},[]);
+  useEffect(()=>{try{window.localStorage.setItem('mokra_preview_color',selectedColor);}catch{}},[selectedColor]);
+  return <main className="mk-site" id="top" style={{'--mokra-accent':selectedColor}}>
     <Navigation/>
     <section className="mk-hero" aria-labelledby="mk-hero-title">
       <div className="mk-hero-grain"/>
-      <div className="mk-hero-model"><Character color={selectedColor}/></div>
+      <div className="mk-hero-model"><Character color={selectedColor} rainbow={particleMode==='rainbow'} density={particleDensity}/></div>
       <div className="mk-real-model-mark" aria-label="Actual Monki 1 player model">MONKI / LIVE 3D <span>●</span> RAINBOW PARTICLES</div>
       <div className="mk-hero-ghost"/>
       <div className="mk-hero-content">
@@ -99,7 +104,7 @@ export default function Home() {
     <section className="mk-movement" id="movement">
       <div className="mk-content mk-movement-grid">
         <Reveal className="mk-movement-text"><Kicker>01 / MOVEMENT IS EVERYTHING</Kicker><h2>Your arms<br/>are the way<br/><em>forward.</em></h2><p>Forget the joystick. Push off the ground, reach for a ledge, and fling yourself into places you probably shouldn&apos;t be. In Mokra, every move starts with you.</p><div className="mk-tiny-links"><span>ARM-DRIVEN MOVEMENT</span><span>CLIMB &amp; EXPLORE</span><span>BUILT FOR VR</span></div></Reveal>
-        <div className="mk-movement-model"><Character color={selectedColor} variant="portrait"/><span className="mk-model-tag">MONKI 1 / ORIGINAL UPLOADED 3D MESH</span></div>
+        <div className="mk-movement-model"><Character color={selectedColor} variant="portrait" rainbow={particleMode==='rainbow'} density={particleDensity}/><span className="mk-model-tag">MONKI 1 / ORIGINAL UPLOADED 3D MESH</span></div>
       </div>
     </section>
 
@@ -123,7 +128,10 @@ export default function Home() {
 
     <section className="mk-people mk-section" id="community"><div className="mk-content"><Reveal className="mk-people-intro"><Kicker>05 / BETTER WITH OTHERS</Kicker><h2>Bring people.</h2><p>It&apos;s scarier together. It&apos;s also a lot more fun.</p></Reveal><div className="mk-feature-grid">{features.map(({icon:Icon,title,desc})=><article key={title}><Icon size={24} strokeWidth={1.4}/><h3>{title}</h3><p>{desc}</p></article>)}</div></div></section>
 
-    <section className="mk-customize mk-section" id="player"><div className="mk-content mk-customize-layout"><div className="mk-custom-model"><Character color={selectedColor} variant="mini"/></div><Reveal className="mk-custom-content"><Kicker>06 / IT&apos;S YOU IN THERE</Kicker><h2>Pick your<br/><em>color.</em></h2><p>Make your Mokra unmistakably yours. The creature on this page follows your cursor, and your profile can save its look.</p><div className="mk-colors" role="group" aria-label="Preview creature color">{palette.map(color=><button key={color} type="button" onClick={()=>setSelectedColor(color)} aria-label={`Choose color ${color}`} aria-pressed={color===selectedColor} className={color===selectedColor?'active':''} style={{'--mk-color':color}}/>)}</div><Link className="mk-blue-button" href="/account">Open player account <ArrowUpRight size={16}/></Link><small>Save your selected color in the account portal after signing in.</small></Reveal></div></section>
+    <section className="mk-customize mk-section" id="player"><div className="mk-content mk-customize-layout"><div className="mk-custom-model"><Character color={selectedColor} variant="mini" rainbow={particleMode==='rainbow'} density={particleDensity}/></div><Reveal className="mk-custom-content"><Kicker>06 / IT&apos;S YOU IN THERE</Kicker><h2>Pick your<br/><em>color.</em></h2><p>Make your Mokra unmistakably yours. The creature on this page follows your cursor, and your profile can save its look.</p><div className="mk-colors" role="group" aria-label="Preview creature color">{APPEARANCE_COLORS.map(item=><button key={item.value} title={item.name} type="button" onClick={()=>setSelectedColor(item.value)} aria-label={`Choose ${item.name}`} aria-pressed={item.value===selectedColor} className={item.value===selectedColor?'active':''} style={{'--mk-color':item.value}}/>)}</div>
+        <div className="mk-v6-color-edit"><label htmlFor="mk-color-custom">CUSTOM FUR COLOR</label><input id="mk-color-custom" aria-label="Choose a custom color" type="color" value={selectedColor} onChange={e=>setSelectedColor(e.target.value)}/><code>{selectedColor.toUpperCase()}</code></div>
+        <div className="mk-v6-effects"><span>PARTICLE EFFECT</span><div role="group" aria-label="Particle effect"><button type="button" className={particleMode==='rainbow'?'chosen':''} aria-pressed={particleMode==='rainbow'} onClick={()=>setParticleMode('rainbow')}>Rainbow rain</button><button type="button" className={particleMode==='solid'?'chosen':''} aria-pressed={particleMode==='solid'} onClick={()=>setParticleMode('solid')}>Solid glow</button></div><label htmlFor="mk-density">DOT DENSITY · {particleDensity}</label><input id="mk-density" type="range" min="1" max="4" step="1" value={particleDensity} onChange={e=>setParticleDensity(Number(e.target.value))}/></div>
+        <Link className="mk-blue-button" href="/account">Open player account <ArrowUpRight size={16}/></Link><small>Choose your appearance in your profile to save it in Neon and sync it with your game.</small></Reveal></div></section>
 
     <section className="mk-faq mk-section"><div className="mk-content mk-faq-layout"><Reveal><Kicker>07 / THE BASICS</Kicker><h2>Before you<br/>head down.</h2></Reveal><div className="mk-faq-list">{faqs.map(([q,a],i)=><div className="mk-faq-item" key={q}><button onClick={()=>setOpenFaq(openFaq===i?-1:i)} aria-expanded={openFaq===i}><span>{String(i+1).padStart(2,'0')}</span>{q}<ChevronDown size={17} className={openFaq===i?'open':''}/></button>{openFaq===i&&<p>{a}</p>}</div>)}</div></div></section>
 

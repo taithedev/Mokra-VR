@@ -5,7 +5,7 @@ Original MOKRA branding and a 3D cursor-reactive procedural character. Inspired 
 ## What's built
 
 - Cinematic responsive landing page, interactive 3D creature with cursor tracking, selectable fur colors, game-mode concept sections, FAQ, responsive navigation, and original branding.
-- Account registration and login using a username and password (no email required), scrypt password hashes with random per-user salts, HMAC-signed HttpOnly SameSite cookies, and Postgres-backed rate limits.
+- Account registration and login using a username and password (no email required), scrypt password hashes with random per-user salts, revocable, database-backed HttpOnly SameSite web sessions, and Postgres-backed rate limits.
 - Secure player dashboard: display name, appearance, level, runs, shards, active game sessions, remote device revocation, and account deletion.
 - Device-code pairing protocol to link a Unity/Meta Quest/PCVR session to a website account without typing passwords in the headset.
 - Postgres database already provisioned in Neon as `Mokra` (`ancient-band-52843062`), database `mokra`, with the schema in `database/schema.sql`.
@@ -17,7 +17,7 @@ Original MOKRA branding and a 3D cursor-reactive procedural character. Inspired 
 
 1. Create a new Next.js project on Vercel (or another Node-compatible host) and upload this source code / link your own GitHub repository.
 2. Open the existing **Mokra** Neon project, select database `mokra`, and copy the PostgreSQL connection string. Put it in Vercel's server-side `DATABASE_URL` environment variable for production and preview.
-3. Generate a secret locally: `node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"`. Set the result as `SESSION_SECRET` in Vercel's environment variables. **Never put secrets in `NEXT_PUBLIC_` variables, client code, a GitHub commit, or screenshots.**
+3. Run the additive migration at `database/migrations/002_profile_and_sessions.sql` if setting up a new database. Browser sessions are now stored securely in Neon; no `SESSION_SECRET` is needed. **Never put credentials in `NEXT_PUBLIC_` variables or GitHub.**
 4. Run `npm install`, `npm run build`, then deploy. Use Node 22+.
 5. Visit `/api/health`; it returns `{ "status": "ok", "database": "connected" }` when database access works. Try registering a disposable account, customizing color, signing out/in, and deleting it before public launch.
 6. Before public release, add an actual privacy contact/support channel and complete a moderation, security, accessibility, and legal review. Password-only accounts have **no password-recovery flow** yet, so consider adding optional verified email recovery.
@@ -47,7 +47,7 @@ Only profile reads are provided to the game. Game progress updates must be imple
 - Never give admin rights based solely on a chosen username. Owner/staff identity and permissions need a verified invite/claim flow if added.
 - The website should be served over HTTPS; the session cookie is Secure in production.
 - Rate limits are Postgres backed. Clean expired rate-limit and pairing rows periodically when the site scales.
-- HMAC session cookies do not support individual web-session revocation yet; account deletion, expiry, and rotating `SESSION_SECRET` invalidate sessions. Add a server session registry for logout across all browsers.
+- Website sessions are stored by token hash in `mokra_web_sessions`. Sign-out revokes a browser session and password changes sign out other browsers.
 - This is a functional starter, not an audited authentication provider; for large public launch consider a mature auth provider with recovery, MFA, secure device management, and abuse reporting.
 
 ## File map
@@ -69,7 +69,7 @@ The public landing page now uses an original, cinematic dark/blue experience ins
 
 The account portal and `/api/auth`, `/api/me`, `/api/game`, `/api/health` routes are intentionally unchanged. Server-side `DATABASE_URL` and `SESSION_SECRET` are still required for registration and game pairing. Existing Unity integration remains at `public/unity/MokraAccountLink.cs`.
 
-The 3D mascot is generated procedurally in `components/Character.jsx`; no `.glb` model is required. Original scene illustrations are in `public/scenes/`. Environment, creature and game mode concepts are previews, not claims of finished in-game features.
+The 3D mascot uses the real `public/models/mokra-player.glb` mesh and the particle effect is generated procedurally. Original scene illustrations are in `public/scenes/`. Environment, creature and game mode concepts are previews, not claims of finished in-game features.
 
 
 ## Real player mesh (Mokra v5)
@@ -92,3 +92,12 @@ The website model can float and track cursor movement; in-game IK and
 facial animation need the Unity rig version.
 
 Validate the model with \`node scripts/validate-model.mjs\`.
+
+
+## Mokra v6 — Appearance and accounts
+
+- Sniglet 400/800 for UI text and section headings; main MOKRA marker title retains its original font.
+- Twelve fur-color presets, a custom color selector, RGB tinting on the **real Monki1** fur mesh (eyes/mouth excluded), rainbow or solid particle modes, and 1–4 dot density.
+- Neon now stores `fur_color`, `particle_mode`, and `particle_density` on player profiles, and returns them to Unity through the profile API.
+- Browser sessions are revocable and stored as SHA-256 token hashes, independent of SESSION_SECRET. Includes change-password and account connection/error states.
+- See `README-ACCOUNT-V6.md` for deployment, migration and test steps.
