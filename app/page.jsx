@@ -30,6 +30,7 @@ const faqs = [
   ['When can I play?', 'Mokra is in active development. A release date has not been announced. The locations and encounters shown here are previews of the intended atmosphere.'],
   ['Can I make an account?', 'Yes. Your account can save a profile and character color when the site is hosted with its Neon database configured.'],
   ['How does game linking work?', 'Start linking in Mokra to receive a temporary eight-character code, then sign into the player portal and enter it to link the headset securely.'],
+  ['Can Mokra AI help me?', 'Yes. The AI guide answers questions in the chat panel and can speak responses using supported browser voices. Live AI requires the site owner to configure Groq securely.'],
 ];
 
 function Reveal({ children, className = '', ...props }) {

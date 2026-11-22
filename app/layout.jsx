@@ -4,7 +4,9 @@ import './mokra-v4.css';
 import './mokra-v5.css';
 import './mokra-v6.css';
 import './mokra-v7.css';
+import './mokra-v8.css';
 import Starfield from '@/components/Starfield';
+import MokraAI from '@/components/MokraAI';
 
 export const metadata = {
   title: { default: 'MOKRA — Into the Unknown', template: '%s | MOKRA' },
@@ -17,5 +19,5 @@ export const metadata = {
   },
 };
 export default function RootLayout({ children }) {
-  return <html lang="en"><body><Starfield/>{children}</body></html>;
+  return <html lang="en"><body><Starfield/>{children}<MokraAI/></body></html>;
 }

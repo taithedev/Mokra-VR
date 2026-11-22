@@ -229,7 +229,24 @@ function RainbowRain({small=false,paused=false,rainbow=true,color='#476bff'}) {
   </points>;
 }
 
-function Stage({color,variant,rainbow=true,density=2,paused=false,onLoaded,onError}) {
+function TalkingMouth({anchor,speaking,paused}){
+  const cavity=useRef(null),intensity=useRef(0);
+  useFrame(({clock},dt)=>{
+    if(!cavity.current)return;
+    const rhythmic=paused?.58:(.55+.45*Math.abs(Math.sin(clock.elapsedTime*12.5)));
+    const goal=speaking?Math.max(.20,rhythmic):0;
+    intensity.current=THREE.MathUtils.damp(intensity.current,goal,14,dt);
+    cavity.current.visible=intensity.current>.025;
+    cavity.current.scale.set(.115,.012+.18*intensity.current,.026);
+    cavity.current.material.opacity=Math.min(1,intensity.current*1.2);
+  });
+  return <mesh ref={cavity} position={anchor} visible={false} renderOrder={6}>
+    <sphereGeometry args={[1,24,20]}/>
+    <meshBasicMaterial color="#290e20" transparent opacity={0} depthWrite={false}/>
+  </mesh>;
+}
+
+function Stage({color,variant,rainbow=true,density=2,speaking=false,paused=false,onLoaded,onError}) {
   const group=useRef(null),dots=useRef(null),halo=useRef(null);
   const cursor=useRef({x:-1,y:-1,active:false});
   const raycaster=useMemo(()=>new THREE.Raycaster(),[]);
@@ -241,6 +258,7 @@ function Stage({color,variant,rainbow=true,density=2,paused=false,onLoaded,onErr
   }),[]);
   useEffect(()=>()=>glowTexture?.dispose(),[glowTexture]);
   const [loaded,setLoaded]=useState(null);
+  const [mouthAnchor,setMouthAnchor]=useState([0,.52,.64]);
   useEffect(()=>{
     let active=true;
     const loader=new GLTFLoader();
@@ -262,6 +280,14 @@ function Stage({color,variant,rainbow=true,density=2,paused=false,onLoaded,onErr
           }
         }
       });
+      const mouth=actualModel.getObjectByName('Monki Mouth')||actualModel.getObjectByName('mesh_Mouth');
+      if(mouth){
+        const bbox=new THREE.Box3().setFromObject(mouth);
+        if(!bbox.isEmpty()){
+          const middle=bbox.getCenter(new THREE.Vector3());
+          setMouthAnchor([middle.x,middle.y,bbox.max.z+.019]);
+        }
+      }
       setLoaded(actualModel);
       onLoaded?.(true);
     },undefined,(error)=>{
@@ -273,7 +299,7 @@ function Stage({color,variant,rainbow=true,density=2,paused=false,onLoaded,onErr
     return ()=>{active=false;};
   },[onLoaded,onError,fx]);
   const model=loaded;
-  const points=useMemo(()=>model?samplePoints(model,variant==='mini'?4000*density:12000*density):null,[model,variant,density]);
+  const points=useMemo(()=>model?samplePoints(model,(variant==='mini'||variant==='assistant'?2600:12000)*density):null,[model,variant,density]);
   useEffect(()=>()=>points?.dispose(),[points]);
   const uniforms=useMemo(()=>({
     uTime:{value:0},uBaseColor:{value:new THREE.Color('#476bff')},
@@ -300,7 +326,15 @@ function Stage({color,variant,rainbow=true,density=2,paused=false,onLoaded,onErr
       document.removeEventListener('pointerleave',onLeave);
     };
   },[]);
-  useFrame(({clock,camera,gl},dt)=>{
+  useFrame(({clock,camera,gl,size},dt)=>{
+    // Keep the complete long-armed Monki in frame even inside a narrow chat avatar.
+    if(camera.isPerspectiveCamera && size.width>0 && size.height>0){
+      const aspect=size.width/size.height;
+      const fitWidth=5.85/(2*Math.tan(THREE.MathUtils.degToRad(camera.fov/2))*Math.max(.38,aspect));
+      const desiredDistance=Math.max(variant==='assistant'?7.9:8.2,fitWidth*1.09);
+      camera.position.z=THREE.MathUtils.damp(camera.position.z,desiredDistance,6,dt);
+      camera.lookAt(0,0,0);
+    }
     const time=paused?0:clock.elapsedTime;
     fx.time.value=time;
     uniforms.uTime.value=time;
@@ -333,9 +367,10 @@ function Stage({color,variant,rainbow=true,density=2,paused=false,onLoaded,onErr
     <directionalLight position={[2.3,4.5,5]} intensity={2.4}/>
     <directionalLight position={[-4,1,-3]} color="#335bff" intensity={1.2}/>
     <pointLight position={[0,-1,3]} color="#8f56ff" intensity={.8}/>
-    <RainbowRain small={variant==='mini'} paused={paused} rainbow={rainbow} color={color}/>
+    {variant!=='assistant'&&<RainbowRain small={variant==='mini'} paused={paused} rainbow={rainbow} color={color}/>}
     <group ref={group} scale={variant==='mini'?.92:1}>
       {model&&<primitive object={model}/>}
+      {model&&variant==='assistant'&&<TalkingMouth anchor={mouthAnchor} speaking={speaking} paused={paused}/>}
       {points&&<points geometry={points} frustumCulled={false}>
         <shaderMaterial ref={dots} uniforms={uniforms} vertexShader={SURFACE_VERTEX} fragmentShader={SURFACE_FRAGMENT} transparent depthWrite={false} blending={THREE.AdditiveBlending}/>
       </points>}
@@ -346,7 +381,7 @@ function Stage({color,variant,rainbow=true,density=2,paused=false,onLoaded,onErr
   </>;
 }
 
-export default function Character({color='#476bff',variant='hero',rainbow=true,density=2}) {
+export default function Character({color='#476bff',variant='hero',rainbow=true,density=2,speaking=false}) {
   const [reduced,setReduced]=useState(false);
   const [ready,setReady]=useState(false);
   const [loadError,setLoadError]=useState(false);
@@ -357,8 +392,8 @@ export default function Character({color='#476bff',variant='hero',rainbow=true,d
     return ()=>q.removeEventListener?.('change',sync);
   },[]);
   return <div className={'mk-character mk-character--'+variant} role="img" aria-label="Real Mokra 3D player model with rainbow fur and a magnified luminous glow where you hover">
-    <Canvas dpr={[1,1.5]} gl={{alpha:true,antialias:true,powerPreference:'high-performance'}} camera={{position:[0,.18,variant==='mini'?8.7:7.6],fov:39}} frameloop="always">
-      <Stage color={color} variant={variant} rainbow={rainbow} density={density} paused={reduced} onLoaded={setReady} onError={setLoadError}/>
+    <Canvas dpr={variant==='assistant'?[1,1.25]:[1,1.5]} gl={{alpha:true,antialias:true,powerPreference:'high-performance'}} camera={{position:[0,.18,8.8],fov:39}} frameloop="always">
+      <Stage color={color} variant={variant} rainbow={rainbow} density={density} speaking={speaking} paused={reduced} onLoaded={setReady} onError={setLoadError}/>
     </Canvas>
     {!ready&&!loadError&&<div className="mk-model-loadstate" role="status"><span className="mk-model-loadspinner"/>LOADING REAL MOKRA MODEL</div>}
     {loadError&&<div className="mk-model-loadstate" role="alert">MODEL COULD NOT LOAD · CHECK ASSET PATH</div>}
