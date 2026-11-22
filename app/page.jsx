@@ -84,11 +84,12 @@ export default function Home() {
     <section className="mk-hero" aria-labelledby="mk-hero-title">
       <div className="mk-hero-grain"/>
       <div className="mk-hero-model"><Character color={selectedColor}/></div>
+      <div className="mk-real-model-mark" aria-label="Actual Monki 1 player model">MONKI / LIVE 3D <span>●</span> RAINBOW PARTICLES</div>
       <div className="mk-hero-ghost"/>
       <div className="mk-hero-content">
         <p className="mk-pretitle">A WORLD JUST OUT OF SIGHT <span className="mk-pretitle-line"/> VR / IN DEVELOPMENT</p>
         <h1 id="mk-hero-title" className="mk-wordmark">MOKRA<span className="mk-word-underline"/></h1>
-        <p className="mk-hero-caption">GO DEEPER. FIND YOUR PEOPLE. DON&apos;T LOOK BACK.</p>
+        <p className="mk-hero-caption">GO DEEPER. MEET YOUR MONKI. DON&apos;T LOOK BACK.</p>
         <div className="mk-hero-cta"><Link className="mk-blue-button" href="/account">Make your account <ArrowUpRight size={16}/></Link><a className="mk-text-button" href="#movement">Discover the world <ArrowDown size={13}/></a></div>
         <p className="mk-hero-status"><span/> MULTIPLAYER VR — CURRENTLY IN DEVELOPMENT</p>
       </div>
@@ -98,7 +99,7 @@ export default function Home() {
     <section className="mk-movement" id="movement">
       <div className="mk-content mk-movement-grid">
         <Reveal className="mk-movement-text"><Kicker>01 / MOVEMENT IS EVERYTHING</Kicker><h2>Your arms<br/>are the way<br/><em>forward.</em></h2><p>Forget the joystick. Push off the ground, reach for a ledge, and fling yourself into places you probably shouldn&apos;t be. In Mokra, every move starts with you.</p><div className="mk-tiny-links"><span>ARM-DRIVEN MOVEMENT</span><span>CLIMB &amp; EXPLORE</span><span>BUILT FOR VR</span></div></Reveal>
-        <div className="mk-movement-model"><Character color={selectedColor} variant="portrait"/><span className="mk-model-tag">ORIGINAL CHARACTER / MK-01</span></div>
+        <div className="mk-movement-model"><Character color={selectedColor} variant="portrait"/><span className="mk-model-tag">MONKI 1 / ORIGINAL UPLOADED 3D MESH</span></div>
       </div>
     </section>
 

@@ -1,6 +1,7 @@
 import './globals.css';
 import './mokra-v2.css';
 import './mokra-v4.css';
+import './mokra-v5.css';
 
 export const metadata = {
   title: { default: 'MOKRA — Into the Unknown', template: '%s | MOKRA' },

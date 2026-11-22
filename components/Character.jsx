@@ -81,92 +81,6 @@ function randomSeed(seed) {
   return () => ((n = (Math.imul(n, 1664525) + 1013904223) >>> 0) / 4294967296);
 }
 
-function screenshotCreature() {
-  // Original geometric recreation based on the supplied model screenshots.
-  // Its shape is deliberately replaceable by the user's own GLB.
-  const root = new THREE.Group();
-  const face = new THREE.MeshStandardMaterial({color:'#c8cdd6',roughness:.87});
-  const fur = new THREE.MeshStandardMaterial({color:'#aab4c4',roughness:.96});
-  const belly = new THREE.MeshStandardMaterial({color:'#d8dce1',roughness:1});
-  const rim = new THREE.MeshStandardMaterial({color:'#d3d9e2',roughness:.55,metalness:.06});
-  const eye = new THREE.MeshPhysicalMaterial({color:'#01050c',metalness:.28,roughness:.055,clearcoat:1,clearcoatRoughness:.035});
-  const mouthMaterial = new THREE.MeshBasicMaterial({color:'#b36b76'});
-  const rand = randomSeed(28234);
-
-  function ellipsoid(x,y,z,sx,sy,sz,material=fur,mask=0,rough=false) {
-    const geo = new THREE.SphereGeometry(1,40,28);
-    if(rough) {
-      const pos = geo.attributes.position;
-      for(let i=0;i<pos.count;i++) {
-        const v = new THREE.Vector3().fromBufferAttribute(pos,i);
-        const ripple = 1 + (rand()-.5)*.026;
-        v.multiplyScalar(ripple);
-        pos.setXYZ(i,v.x,v.y,v.z);
-      }
-      geo.computeVertexNormals();
-    }
-    const m = new THREE.Mesh(geo,material);
-    m.position.set(x,y,z);m.scale.set(sx,sy,sz);
-    m.userData.faceMask=mask;root.add(m);
-    return m;
-  }
-  function tapered(a,b,rA,rB,material=fur,mask=0) {
-    const start = new THREE.Vector3(...a),end = new THREE.Vector3(...b);
-    const diff = end.clone().sub(start);
-    const mesh = new THREE.Mesh(new THREE.CylinderGeometry(rB,rA,diff.length(),22,5),material);
-    mesh.position.copy(start).add(end).multiplyScalar(.5);
-    mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),diff.clone().normalize());
-    mesh.userData.faceMask=mask;root.add(mesh);
-    ellipsoid(...a,rA,rA,rA,material,mask,true);
-    ellipsoid(...b,rB,rB,rB,material,mask,true);
-  }
-  // A legless, elongated chest with a broad pale oval belly.
-  ellipsoid(0,-.31,-.08,.54,.91,.39,fur,0,true);
-  ellipsoid(0,.27,-.12,.66,.36,.38,fur,0,true);
-  ellipsoid(0,-.46,.304,.392,.67,.095,belly,1);
-  ellipsoid(0,-.51,.401,.31,.54,.025,belly,1);
-
-  for(const side of [-1,1]) {
-    const s=side;
-    ellipsoid(s*.58,.27,-.07,.27,.27,.27,fur,0,true);
-    tapered([s*.63,.28,-.055],[s*1.43,.27,-.065],.255,.205,fur);
-    tapered([s*1.43,.27,-.065],[s*2.02,.24,-.04],.20,.135,fur);
-    ellipsoid(s*2.17,.22,.035,.265,.139,.13,face,1);
-    for(let finger=0;finger<3;finger++){
-      const fy=.315-finger*.095;
-      const length=finger===1?.52:.43;
-      const handStart=[s*2.32,fy,.04];
-      const handEnd=[s*(2.32+length),fy+(finger===0?.045:-.025),.065];
-      tapered(handStart,handEnd,.072,.038,face,1);
-    }
-    tapered([s*2.09,.105,.09],[s*2.33,-.085,.22],.086,.043,face,1);
-    // Discrete ears just outside the round head.
-    ellipsoid(s*.505,1.023,-.06,.132,.215,.16,face,1);
-    ellipsoid(s*.55,1.03,.078,.075,.119,.029,belly,1);
-  }
-
-  ellipsoid(0,1.035,-.01,.515,.62,.448,face,1);
-  ellipsoid(0,.919,.372,.426,.36,.128,belly,1);
-  ellipsoid(0,1.291,.314,.35,.20,.13,face,1);
-  // Glossy oval eyes sit inside raised pale sockets.
-  for(const side of [-1,1]){
-    ellipsoid(side*.236,1.106,.416,.196,.209,.09,rim,1);
-    ellipsoid(side*.236,1.103,.486,.156,.170,.061,eye,2);
-    ellipsoid(side*.211,1.163,.541,.033,.041,.012,belly,2);
-    ellipsoid(side*.10,.833,.490,.017,.012,.013,eye,2);
-  }
-  const smile = new THREE.CatmullRomCurve3([
-    new THREE.Vector3(-.173,.728,.473),
-    new THREE.Vector3(-.075,.712,.489),
-    new THREE.Vector3(.055,.709,.491),
-    new THREE.Vector3(.174,.735,.472)
-  ]);
-  const mouth = new THREE.Mesh(new THREE.TubeGeometry(smile,28,.009,6,false),mouthMaterial);
-  mouth.userData.faceMask=2;root.add(mouth);
-  root.updateMatrixWorld(true);
-  return root;
-}
-
 function normalizeModel(model) {
   const root=model.clone(true);
   const bbox=new THREE.Box3().setFromObject(root);
@@ -186,6 +100,8 @@ function samplePoints(source,count=35000) {
   let total=0;
   source.traverse(obj=>{
     if(!obj.isMesh || !obj.geometry?.attributes?.position)return;
+    // Keep the real glossy eye and mouth materials visible under the rainbow points.
+    if(/eye|mouth/i.test(String(obj.material?.name||'')+' '+obj.name))return;
     let sampler;
     try {sampler=new MeshSurfaceSampler(obj).build();} catch {return;}
     const scale=new THREE.Vector3();
@@ -241,23 +157,37 @@ function RainbowRain({small=false,paused=false}) {
   </points>;
 }
 
-function Stage({color,variant,rainbow=true,paused=false}) {
+function Stage({color,variant,rainbow=true,paused=false,onLoaded,onError}) {
   const group=useRef(null),dots=useRef(null);
   const move=useRef({x:0,y:0});
-  const fallback=useMemo(()=>screenshotCreature(),[]);
   const [loaded,setLoaded]=useState(null);
   useEffect(()=>{
-    let current=true;
-    fetch(MODEL_PATH,{method:'HEAD'}).then(r=>{
-      if(!r.ok||!current)return;
-      new GLTFLoader().load(MODEL_PATH,g=>{
-        if(current)setLoaded(normalizeModel(g.scene));
-      },undefined,()=>{});
-    }).catch(()=>{});
-    return ()=>{current=false;};
-  },[]);
-  const model=loaded||fallback;
-  const points=useMemo(()=>samplePoints(model,variant==='mini'?12000:38000),[model,variant]);
+    let active=true;
+    const loader=new GLTFLoader();
+    loader.load(MODEL_PATH,(gltf)=>{
+      if(!active)return;
+      const actualModel=normalizeModel(gltf.scene);
+      actualModel.traverse(object=>{
+        if(!object.isMesh)return;
+        object.castShadow=true;
+        object.receiveShadow=true;
+        if(object.material){
+          object.material.side=THREE.DoubleSide;
+          object.material.needsUpdate=true;
+        }
+      });
+      setLoaded(actualModel);
+      onLoaded?.(true);
+    },undefined,(error)=>{
+      if(active){
+        console.error('Unable to load Mokra player model:',error);
+        onError?.(true);
+      }
+    });
+    return ()=>{active=false;};
+  },[onLoaded,onError]);
+  const model=loaded;
+  const points=useMemo(()=>model?samplePoints(model,variant==='mini'?10500:27000):null,[model,variant]);
   useEffect(()=>()=>points?.dispose(),[points]);
   const uniforms=useMemo(()=>({uTime:{value:0},uBaseColor:{value:new THREE.Color('#517aff')},uSpectrum:{value:1},uSize:{value:25}}),[]);
   useEffect(()=>{
@@ -289,7 +219,7 @@ function Stage({color,variant,rainbow=true,paused=false}) {
     <pointLight position={[0,-1,3]} color="#8f56ff" intensity={.8}/>
     <RainbowRain small={variant==='mini'} paused={paused}/>
     <group ref={group} scale={variant==='mini'?.92:1}>
-      <primitive object={model}/>
+      {model&&<primitive object={model}/>}
       {points&&<points geometry={points} frustumCulled={false}>
         <shaderMaterial ref={dots} uniforms={uniforms} vertexShader={SURFACE_VERTEX} fragmentShader={SURFACE_FRAGMENT} transparent depthWrite={false} blending={THREE.AdditiveBlending}/>
       </points>}
@@ -299,6 +229,8 @@ function Stage({color,variant,rainbow=true,paused=false}) {
 
 export default function Character({color='#507cff',variant='hero',rainbow=true}) {
   const [reduced,setReduced]=useState(false);
+  const [ready,setReady]=useState(false);
+  const [loadError,setLoadError]=useState(false);
   useEffect(()=>{
     const q=window.matchMedia('(prefers-reduced-motion: reduce)');
     const sync=()=>setReduced(q.matches);
@@ -307,7 +239,9 @@ export default function Character({color='#507cff',variant='hero',rainbow=true})
   },[]);
   return <div className={'mk-character mk-character--'+variant} role="img" aria-label="Interactive long-armed Mokra creature covered in descending rainbow light dots">
     <Canvas dpr={[1,1.5]} gl={{alpha:true,antialias:true,powerPreference:'high-performance'}} camera={{position:[0,.18,variant==='mini'?8.7:7.6],fov:39}} frameloop="always">
-      <Stage color={color} variant={variant} rainbow={rainbow} paused={reduced}/>
+      <Stage color={color} variant={variant} rainbow={rainbow} paused={reduced} onLoaded={setReady} onError={setLoadError}/>
     </Canvas>
+    {!ready&&!loadError&&<div className="mk-model-loadstate" role="status"><span className="mk-model-loadspinner"/>LOADING REAL MOKRA MODEL</div>}
+    {loadError&&<div className="mk-model-loadstate" role="alert">MODEL COULD NOT LOAD · CHECK ASSET PATH</div>}
   </div>;
 }

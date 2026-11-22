@@ -70,3 +70,25 @@ The public landing page now uses an original, cinematic dark/blue experience ins
 The account portal and `/api/auth`, `/api/me`, `/api/game`, `/api/health` routes are intentionally unchanged. Server-side `DATABASE_URL` and `SESSION_SECRET` are still required for registration and game pairing. Existing Unity integration remains at `public/unity/MokraAccountLink.cs`.
 
 The 3D mascot is generated procedurally in `components/Character.jsx`; no `.glb` model is required. Original scene illustrations are in `public/scenes/`. Environment, creature and game mode concepts are previews, not claims of finished in-game features.
+
+
+## Real player mesh (Mokra v5)
+
+The site now includes **the real uploaded \`Monki1.fbx\` geometry**, converted into
+\`public/models/mokra-player.glb\` (GLB 2.0, approximately 615 KB) with
+separate **Mokra Fur**, **Mokra Mouth**, and **Mokra Eyes** materials. The 3D
+preview does not use a procedural replacement. Both hero and player model
+sections load this file through Three.js, sample its actual surface for
+glowing circular rainbow dots, and react smoothly to the pointer.
+
+The FBX supplied for this update **does not contain its referenced eight
+PNG material textures**. The mesh geometry is real; neutral white fur,
+dark glossy eyes and a subdued mouth color are included as stand-in
+materials until the original texture images are supplied.
+
+The original rig, skeleton weights, and shape keys are not included in
+this static website preview GLB. They remain in the supplied source FBX.
+The website model can float and track cursor movement; in-game IK and
+facial animation need the Unity rig version.
+
+Validate the model with \`node scripts/validate-model.mjs\`.
