@@ -89,7 +89,7 @@ export default function Home() {
     <section className="mk-hero" aria-labelledby="mk-hero-title">
       <div className="mk-hero-grain"/>
       <div className="mk-hero-model"><Character color={selectedColor} rainbow={particleMode==='rainbow'} density={particleDensity}/></div>
-      <div className="mk-real-model-mark" aria-label="Actual Monki 1 player model">MONKI / LIVE 3D <span>●</span> RAINBOW PARTICLES</div>
+      <div className="mk-real-model-mark" aria-label="Actual Monki 1 player model">MONKI / LIVE 3D <span>●</span> RAINBOW FUR + HOVER GLOW</div>
       <div className="mk-hero-ghost"/>
       <div className="mk-hero-content">
         <p className="mk-pretitle">A WORLD JUST OUT OF SIGHT <span className="mk-pretitle-line"/> VR / IN DEVELOPMENT</p>
@@ -98,7 +98,7 @@ export default function Home() {
         <div className="mk-hero-cta"><Link className="mk-blue-button" href="/account">Make your account <ArrowUpRight size={16}/></Link><a className="mk-text-button" href="#movement">Discover the world <ArrowDown size={13}/></a></div>
         <p className="mk-hero-status"><span/> MULTIPLAYER VR — CURRENTLY IN DEVELOPMENT</p>
       </div>
-      <div className="mk-hero-bottom"><span>001 / A WORLD WITH NO MAP</span><span><MousePointer2 size={14}/> MOVE YOUR MOUSE — IT&apos;S WATCHING</span><a href="#movement" aria-label="Scroll down"><ArrowDown size={19}/></a></div>
+      <div className="mk-hero-bottom"><span>001 / A WORLD WITH NO MAP</span><span><MousePointer2 size={14}/> HOVER OVER THE MODEL — MAKE IT GLOW</span><a href="#movement" aria-label="Scroll down"><ArrowDown size={19}/></a></div>
     </section>
 
     <section className="mk-movement" id="movement">
@@ -128,7 +128,7 @@ export default function Home() {
 
     <section className="mk-people mk-section" id="community"><div className="mk-content"><Reveal className="mk-people-intro"><Kicker>05 / BETTER WITH OTHERS</Kicker><h2>Bring people.</h2><p>It&apos;s scarier together. It&apos;s also a lot more fun.</p></Reveal><div className="mk-feature-grid">{features.map(({icon:Icon,title,desc})=><article key={title}><Icon size={24} strokeWidth={1.4}/><h3>{title}</h3><p>{desc}</p></article>)}</div></div></section>
 
-    <section className="mk-customize mk-section" id="player"><div className="mk-content mk-customize-layout"><div className="mk-custom-model"><Character color={selectedColor} variant="mini" rainbow={particleMode==='rainbow'} density={particleDensity}/></div><Reveal className="mk-custom-content"><Kicker>06 / IT&apos;S YOU IN THERE</Kicker><h2>Pick your<br/><em>color.</em></h2><p>Make your Mokra unmistakably yours. The creature on this page follows your cursor, and your profile can save its look.</p><div className="mk-colors" role="group" aria-label="Preview creature color">{APPEARANCE_COLORS.map(item=><button key={item.value} title={item.name} type="button" onClick={()=>setSelectedColor(item.value)} aria-label={`Choose ${item.name}`} aria-pressed={item.value===selectedColor} className={item.value===selectedColor?'active':''} style={{'--mk-color':item.value}}/>)}</div>
+    <section className="mk-customize mk-section" id="player"><div className="mk-content mk-customize-layout"><div className="mk-custom-model"><Character color={selectedColor} variant="mini" rainbow={particleMode==='rainbow'} density={particleDensity}/></div><Reveal className="mk-custom-content"><Kicker>06 / IT&apos;S YOU IN THERE</Kicker><h2>Pick your<br/><em>color.</em></h2><p>Make your Mokra unmistakably yours. Hover over any spot on your real Monki model to magnify it with a soft luminous bloom. The whole character now flows through rainbow colors.</p><div className="mk-colors" role="group" aria-label="Preview creature color">{APPEARANCE_COLORS.map(item=><button key={item.value} title={item.name} type="button" onClick={()=>setSelectedColor(item.value)} aria-label={`Choose ${item.name}`} aria-pressed={item.value===selectedColor} className={item.value===selectedColor?'active':''} style={{'--mk-color':item.value}}/>)}</div>
         <div className="mk-v6-color-edit"><label htmlFor="mk-color-custom">CUSTOM FUR COLOR</label><input id="mk-color-custom" aria-label="Choose a custom color" type="color" value={selectedColor} onChange={e=>setSelectedColor(e.target.value)}/><code>{selectedColor.toUpperCase()}</code></div>
         <div className="mk-v6-effects"><span>PARTICLE EFFECT</span><div role="group" aria-label="Particle effect"><button type="button" className={particleMode==='rainbow'?'chosen':''} aria-pressed={particleMode==='rainbow'} onClick={()=>setParticleMode('rainbow')}>Rainbow rain</button><button type="button" className={particleMode==='solid'?'chosen':''} aria-pressed={particleMode==='solid'} onClick={()=>setParticleMode('solid')}>Solid glow</button></div><label htmlFor="mk-density">DOT DENSITY · {particleDensity}</label><input id="mk-density" type="range" min="1" max="4" step="1" value={particleDensity} onChange={e=>setParticleDensity(Number(e.target.value))}/></div>
         <Link className="mk-blue-button" href="/account">Open player account <ArrowUpRight size={16}/></Link><small>Choose your appearance in your profile to save it in Neon and sync it with your game.</small></Reveal></div></section>

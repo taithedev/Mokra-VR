@@ -13,7 +13,7 @@ async function api(path,method='GET',body){
  return data;
 }
 export default function Account(){
- const[user,setUser]=useState(null),[sessions,setSessions]=useState([]),[loading,setLoading]=useState(true),[serviceError,setServiceError]=useState('');
+ const[user,setUser]=useState(null),[sessions,setSessions]=useState([]),[webSessions,setWebSessions]=useState([]),[loading,setLoading]=useState(true),[serviceError,setServiceError]=useState('');
  const[mode,setMode]=useState('register'),[username,setUsername]=useState(''),[password,setPassword]=useState(''),[visible,setVisible]=useState(false);
  const[name,setName]=useState(''),[color,setColor]=useState(colors[0]),[code,setCode]=useState('');
  const[particleMode,setParticleMode]=useState('rainbow'),[particleDensity,setParticleDensity]=useState(2);
@@ -22,11 +22,11 @@ export default function Account(){
  async function load(){
   try{
     const d=await api('/api/me');
-    setUser(d.user);setSessions(d.sessions||[]);setName(d.user.displayName);setColor(d.user.furColor);
+    setUser(d.user);setSessions(d.sessions||[]);setWebSessions(d.webSessions||[]);setName(d.user.displayName);setColor(d.user.furColor);
     setParticleMode(d.user.particleMode||'rainbow');setParticleDensity(d.user.particleDensity||2);setServiceError('');
   }catch(e){
     if(e.status===401){
-      setUser(null);setSessions([]);
+      setUser(null);setSessions([]);setWebSessions([]);
       try{await api('/api/health');setServiceError('');}
       catch{setServiceError('Cannot connect to Neon. Check the DATABASE_URL environment variable and apply the migration.');}
     } else {setServiceError(e.message||'Account service unavailable.');}
@@ -37,7 +37,7 @@ export default function Account(){
  async function submitAuth(e){
   e.preventDefault();setBusy(true);notice(true,'');
   try{const d=await api('/api/auth','POST',{action:mode,username,password,displayName:name||username});
-   setUser(d.user);setName(d.user.displayName);setColor(d.user.furColor);setParticleMode(d.user.particleMode||'rainbow');setParticleDensity(d.user.particleDensity||2);setSessions([]);setPassword('');setServiceError('');notice(true,'Your account is ready and saved to Neon.')}
+   setUser(d.user);setName(d.user.displayName);setColor(d.user.furColor);setParticleMode(d.user.particleMode||'rainbow');setParticleDensity(d.user.particleDensity||2);setSessions([]);setWebSessions([]);setPassword('');setServiceError('');notice(true,'Your account is ready and saved to Neon.')}
   catch(e){notice(false,e.message)}finally{setBusy(false)}
  }
  async function saveProfile(e){
@@ -56,19 +56,33 @@ export default function Account(){
  }
  async function logout(){
   setBusy(true);
-  try{await api('/api/auth','DELETE');setUser(null);setSessions([]);setPassword('');notice(true,'Signed out.')}
+  try{await api('/api/auth','DELETE');setUser(null);setSessions([]);setWebSessions([]);setPassword('');notice(true,'Signed out.')}
   catch(e){notice(false,e.message)}finally{setBusy(false)}
+ }
+ async function revokeWebSession(sessionId){
+  setBusy(true);notice(true,'');
+  try{
+    await api('/api/me','POST',{action:'revokeWebSession',sessionId});
+    await load();notice(true,'Browser session revoked.');
+  }catch(e){notice(false,e.message)}finally{setBusy(false)}
+ }
+ async function signOutOtherBrowsers(){
+  setBusy(true);notice(true,'');
+  try{
+    const d=await api('/api/me','POST',{action:'revokeOtherWebSessions'});
+    await load();notice(true,d.revoked===1?'Other browser signed out.':`${d.revoked} other browsers signed out.`);
+  }catch(e){notice(false,e.message)}finally{setBusy(false)}
  }
  async function changePassword(e){
   e.preventDefault();setBusy(true);notice(true,'');
   try{
     const d=await api('/api/me','POST',{action:'changePassword',currentPassword:oldPassword,newPassword});
-    setOldPassword('');setNewPassword('');setPasswordOpen(false);notice(true,d.message||'Password updated.');
+    setOldPassword('');setNewPassword('');setPasswordOpen(false);await load();notice(true,d.message||'Password updated.');
   }catch(e){notice(false,e.message);}finally{setBusy(false);}
  }
  async function deleteAccount(e){
   e.preventDefault();setBusy(true);
-  try{await api('/api/me','DELETE',{password:deletePassword});setUser(null);setSessions([]);setDeletePassword('');setDeleteOpen(false);notice(true,'Your account was deleted.')}
+  try{await api('/api/me','DELETE',{password:deletePassword});setUser(null);setSessions([]);setWebSessions([]);setDeletePassword('');setDeleteOpen(false);notice(true,'Your account was deleted.')}
   catch(e){notice(false,e.message)}finally{setBusy(false)}
  }
  return <main className="portal-page">
@@ -89,6 +103,7 @@ export default function Account(){
     </form><p className="panel-note">Keep your password private. Password recovery is not yet available.</p>
     </div>:
     <div className="dashboard"><div className="dashboard-top"><div><span className="panel-label">WELCOME TO YOUR ACCOUNT</span><h2>HEY, {user.username.toUpperCase()}.</h2><p>Your identity is ready for Mokra.</p></div><button className="outline-button" disabled={busy} onClick={logout}><LogOut size={16}/> SIGN OUT</button></div>
+    <div className="mk-v7-account-summary"><span>● Neon profile</span><span>Rainbow avatar ready</span><span>VR game linking</span></div>
     <div className="stat-grid"><div><span>PLAYER LEVEL</span><b>{user.level}</b></div><div><span>TOTAL RUNS</span><b>{user.totalRuns}</b></div><div><span>SHARDS</span><b>{user.shards}</b></div></div>
     <div className="profile-grid"><div className="small-model"><Character color={color} variant="mini" rainbow={particleMode==='rainbow'} density={particleDensity}/><span>REAL 3D PLAYER MODEL</span></div><form className="stack" onSubmit={saveProfile}><span className="panel-label">02 / PROFILE</span><h3>MAKE IT YOURS.</h3><label>DISPLAY NAME <input required minLength={1} maxLength={32} value={name} onChange={e=>setName(e.target.value)}/></label><div className="color-title">FUR COLOR <span>{color.toUpperCase()}</span></div><div className="color-grid">{APPEARANCE_COLORS.map(item=><button key={item.value} type="button" aria-pressed={item.value===color} aria-label={'Choose '+item.name} title={item.name} className={'color-button '+(item.value===color?'chosen':'')} style={{background:item.value}} onClick={()=>setColor(item.value)}/>)}</div>
     <label className="mk-v6-custom-label">CUSTOM FUR COLOR <input aria-label="Choose a custom fur color" type="color" value={color} onChange={e=>setColor(e.target.value)}/></label>
@@ -96,7 +111,17 @@ export default function Account(){
     <button className="primary full" disabled={busy} type="submit">SAVE CHANGES <ArrowUpRight size={16}/></button></form></div>
     <div className="dashboard-section"><span className="panel-label">03 / CONNECT YOUR GAME</span><h3>LINK YOUR HEADSET.</h3><p>Inside Mokra VR, choose Link Account to get an eight-character code. Enter that code below while signed in.</p><form className="link-form" onSubmit={linkGame}><label className="sr-only" htmlFor="pair-code">VR linking code</label><input id="pair-code" required maxLength={12} autoComplete="off" spellCheck={false} placeholder="8-CHARACTER CODE" value={code} onChange={e=>setCode(e.target.value.toUpperCase())}/><button type="submit" disabled={busy} className="primary">LINK DEVICE <Link2 size={17}/></button></form><p className="hint">Codes expire after 10 minutes. Never share your code with strangers.</p></div>
     <div className="dashboard-section"><div className="section-title"><div><span className="panel-label">04 / CONNECTED DEVICES</span><h3>ACTIVE SESSIONS.</h3></div><button className="outline-button" type="button" onClick={load}><RefreshCw size={15}/> REFRESH</button></div>{sessions.length===0?<p>No connected VR devices yet. They appear here after the game finishes linking.</p>:<div className="sessions">{sessions.map(s=><div key={s.id} className="session"><div><Gamepad2 size={19}/><span><b>{s.device_name}</b><small>Linked {new Date(s.created_at).toLocaleDateString()}</small></span></div><button type="button" disabled={busy} onClick={()=>revoke(s.id)}>REVOKE</button></div>)}</div>}</div>
-    <div className="dashboard-section mk-v6-security"><span className="panel-label">05 / SECURITY</span><h3>ACCOUNT SECURITY.</h3><p>Change your password to sign out other web sessions.</p>{!passwordOpen?<button type="button" className="outline-button" onClick={()=>setPasswordOpen(true)}>CHANGE PASSWORD</button>:<form onSubmit={changePassword} className="stack"><label>CURRENT PASSWORD<input required type="password" autoComplete="current-password" value={oldPassword} onChange={e=>setOldPassword(e.target.value)}/></label><label>NEW PASSWORD<input required type="password" minLength={10} maxLength={128} autoComplete="new-password" value={newPassword} onChange={e=>setNewPassword(e.target.value)}/></label><div className="inline-actions"><button disabled={busy} className="primary" type="submit">UPDATE PASSWORD</button><button type="button" className="outline-button" onClick={()=>{setPasswordOpen(false);setOldPassword('');setNewPassword('')}}>CANCEL</button></div></form>}</div>
+    <div className="dashboard-section mk-v6-security"><span className="panel-label">05 / SECURITY</span><h3>ACCOUNT SECURITY.</h3><p>Manage signed-in browsers or change your password to sign out all other website sessions.</p>{!passwordOpen?<button type="button" className="outline-button" onClick={()=>setPasswordOpen(true)}>CHANGE PASSWORD</button>:<form onSubmit={changePassword} className="stack"><label>CURRENT PASSWORD<input required type="password" autoComplete="current-password" value={oldPassword} onChange={e=>setOldPassword(e.target.value)}/></label><label>NEW PASSWORD<input required type="password" minLength={10} maxLength={128} autoComplete="new-password" value={newPassword} onChange={e=>setNewPassword(e.target.value)}/></label><div className="inline-actions"><button disabled={busy} className="primary" type="submit">UPDATE PASSWORD</button><button type="button" className="outline-button" onClick={()=>{setPasswordOpen(false);setOldPassword('');setNewPassword('')}}>CANCEL</button></div></form>}
+      <div className="mk-v7-web-sessions">
+        <header><h4>Signed-in browsers</h4><button type="button" disabled={busy||webSessions.length<=1} onClick={signOutOtherBrowsers}>Sign out other browsers</button></header>
+        <p>Sessions are stored securely in Neon. You can revoke any session except the browser you are using right now.</p>
+        {webSessions.length===0?<p>No active browser sessions found.</p>:
+        <ul>{webSessions.map(session=><li key={session.id}><div>
+          <b>{session.user_agent?.includes('Firefox')?'Firefox':session.user_agent?.includes('Edg/')?'Microsoft Edge':session.user_agent?.includes('Chrome')?'Chrome':session.user_agent?.includes('Safari')?'Safari':'Browser session'}</b>
+          <small>Signed in {new Date(session.created_at).toLocaleDateString()}</small>
+        </div>{session.is_current?<span className="current">This browser</span>:<button type="button" disabled={busy} onClick={()=>revokeWebSession(session.id)}>Revoke</button>}</li>)}</ul>}
+      </div>
+    </div>
     <div className="danger-zone"><span className="panel-label">06 / ACCOUNT CONTROL</span><h3>DELETE ACCOUNT.</h3><p>Deleting your account permanently removes your profile and all linked device sessions.</p>{!deleteOpen?<button type="button" className="danger-button" onClick={()=>setDeleteOpen(true)}><Trash2 size={16}/> DELETE ACCOUNT</button>:<form onSubmit={deleteAccount} className="stack"><label>CONFIRM WITH YOUR PASSWORD<input required type="password" autoComplete="current-password" value={deletePassword} onChange={e=>setDeletePassword(e.target.value)}/></label><div className="inline-actions"><button disabled={busy} className="danger-button" type="submit">PERMANENTLY DELETE</button><button type="button" className="outline-button" onClick={()=>setDeleteOpen(false)}>CANCEL</button></div></form>}</div>
     </div>
    }
