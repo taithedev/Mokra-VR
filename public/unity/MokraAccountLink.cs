@@ -24,6 +24,8 @@ public class MokraAccountLink : MonoBehaviour
     public string Username { get; private set; }
     public string DisplayName { get; private set; }
     public int Level { get; private set; }
+    public string ParticleMode { get; private set; }
+    public int ParticleDensity { get; private set; }
 
     private string pollToken;
     private string accessToken; // Secret: memory only, never write into logs or PlayerPrefs.
@@ -31,7 +33,7 @@ public class MokraAccountLink : MonoBehaviour
 
     [Serializable] private class GameRequest { public string action; public string deviceName; public string pollToken; }
     [Serializable] private class ApiResponse { public string status; public string code; public string pollToken; public string accessToken; public string error; public int expiresIn; public Player user; }
-    [Serializable] private class Player { public string id; public string username; public string displayName; public string furColor; public int level; public int totalRuns; public int shards; }
+    [Serializable] private class Player { public string id; public string username; public string displayName; public string furColor; public string particleMode; public int particleDensity; public int level; public int totalRuns; public int shards; }
 
     public void StartLinking()
     {
@@ -112,6 +114,8 @@ public class MokraAccountLink : MonoBehaviour
             Username = result.user.username;
             DisplayName = result.user.displayName;
             Level = result.user.level;
+            ParticleMode = result.user.particleMode;
+            ParticleDensity = result.user.particleDensity;
             Color furColor;
             if (ColorUtility.TryParseHtmlString(result.user.furColor, out furColor))
                 ApplyFur(furColor);

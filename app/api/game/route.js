@@ -22,10 +22,18 @@ export async function POST(request){
    if(!record||new Date(record.expires_at).getTime()<Date.now())return json({status:'expired'});
    if(!record.account_id)return json({status:'pending'});
    if(record.consumed_at)return json({status:'completed'});
-   const claim=await query('UPDATE mokra_pairings SET consumed_at=now() WHERE id=$1::uuid AND consumed_at IS NULL AND account_id IS NOT NULL AND expires_at>now() RETURNING account_id,device_name',[record.id]);
-   if(!claim.length)return json({status:'completed'});
+   // One atomic database statement: never consume a pairing code unless the game session is created.
    const token=randomToken();
-   await query('INSERT INTO mokra_game_sessions(account_id,token_hash,device_name) VALUES($1::uuid,$2,$3)',[claim[0].account_id,digest(token),claim[0].device_name]);
+   const linked=await query(`WITH claim AS (
+     UPDATE mokra_pairings SET consumed_at=now()
+     WHERE id=$1::uuid AND consumed_at IS NULL AND account_id IS NOT NULL AND expires_at>now()
+     RETURNING account_id,device_name
+   ), created AS (
+     INSERT INTO mokra_game_sessions(account_id,token_hash,device_name)
+     SELECT account_id,$2,device_name FROM claim
+     RETURNING id
+   ) SELECT EXISTS(SELECT 1 FROM created) AS linked`,[record.id,digest(token)]);
+   if(!linked[0]?.linked)return json({status:'completed'});
    return json({status:'linked',accessToken:token,expiresIn:7776000});
   }
   if(action==='approve'){
