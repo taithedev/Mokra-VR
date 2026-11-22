@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 const character=readFileSync(new URL('../components/Character.jsx',import.meta.url),'utf8');
-test('uses the user's uploaded Mokra player geometry',()=>{
+test('uses the uploaded Mokra player geometry',()=>{
   assert.match(character,/models\/mokra-player\.glb/);
   assert.match(character,/new MeshSurfaceSampler\(obj\)/);
   assert.match(character,/samplePoints\(model,/);
