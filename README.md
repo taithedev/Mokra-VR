@@ -62,3 +62,11 @@ Only profile reads are provided to the game. Game progress updates must be imple
 - `database/schema.sql` Neon migration
 - `public/unity/MokraAccountLink.cs` Unity game-side client
 - `app/globals.css` styling and responsive layout
+
+## Visual refresh — reference recording (November 2026)
+
+The public landing page now uses an original, cinematic dark/blue experience inspired by the *layout and motion* of the site shown in the owner's screen recording: a floating navigation pill, a handwritten MOKRA hero, a blue point-cloud interactive mascot, atmospheric environment illustrations, creature browsing, location cards and player profile CTA. **All artwork and characters in this repository are original Mokra concepts**, not copied GILLA models or game footage.
+
+The account portal and `/api/auth`, `/api/me`, `/api/game`, `/api/health` routes are intentionally unchanged. Server-side `DATABASE_URL` and `SESSION_SECRET` are still required for registration and game pairing. Existing Unity integration remains at `public/unity/MokraAccountLink.cs`.
+
+The 3D mascot is generated procedurally in `components/Character.jsx`; no `.glb` model is required. Original scene illustrations are in `public/scenes/`. Environment, creature and game mode concepts are previews, not claims of finished in-game features.
