@@ -2,6 +2,7 @@
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import {useEffect,useState} from 'react';
+import PlayFabAccount from './PlayFabAccount';
 import {APPEARANCE_COLORS} from '@/lib/appearance';
 import {ArrowLeft,ArrowUpRight,Link2,LogOut,ShieldCheck,Palette,Trash2,RefreshCw,CheckCircle2,Gamepad2,Eye,EyeOff} from 'lucide-react';
 const Character=dynamic(()=>import('@/components/Character'),{ssr:false,loading:()=> <div className="model-loading">LOADING CHARACTER...</div>});
@@ -14,6 +15,7 @@ async function api(path,method='GET',body){
 }
 export default function Account(){
  const[user,setUser]=useState(null),[sessions,setSessions]=useState([]),[webSessions,setWebSessions]=useState([]),[loading,setLoading]=useState(true),[serviceError,setServiceError]=useState('');
+ const[playFabRefresh,setPlayFabRefresh]=useState(0);
  const[mode,setMode]=useState('register'),[username,setUsername]=useState(''),[password,setPassword]=useState(''),[visible,setVisible]=useState(false);
  const[name,setName]=useState(''),[color,setColor]=useState(colors[0]),[code,setCode]=useState('');
  const[particleMode,setParticleMode]=useState('rainbow'),[particleDensity,setParticleDensity]=useState(2);
@@ -47,7 +49,18 @@ export default function Account(){
  }
  async function linkGame(e){
   e.preventDefault();setBusy(true);notice(true,'');
-  try{const d=await api('/api/game','POST',{action:'approve',code});setCode('');notice(true,'Approved '+d.deviceName+'. Return to your headset to finish linking.')}
+  try {
+    try {
+      await api('/api/playfab','POST',{action:'approve',code});
+      setPlayFabRefresh(value=>value+1);
+      notice(true,'PlayFab account linked. Back in Mokra OS, your code will clear when the link is confirmed.');
+    } catch (e) {
+      if(e.status!==404)throw e;
+      const d=await api('/api/game','POST',{action:'approve',code});
+      notice(true,'Approved '+d.deviceName+'. Return to your headset to finish linking.');
+    }
+    setCode('');
+  }
   catch(e){notice(false,e.message)}finally{setBusy(false)}
  }
  async function revoke(id){
@@ -86,10 +99,10 @@ export default function Account(){
   catch(e){notice(false,e.message)}finally{setBusy(false)}
  }
  return <main className="portal-page">
- <header className="portal-nav wrap"><Link href="/" className="logo">M<span>/</span>KRA<span className="asterisk">✳</span></Link><Link href="/" className="back-link"><ArrowLeft size={16}/> BACK TO THE WORLD</Link></header>
+ <header className="portal-nav wrap"><Link href="/" className="logo">M<span>/</span>KRA<span className="asterisk">?</span></Link><Link href="/" className="back-link"><ArrowLeft size={16}/> BACK TO THE WORLD</Link></header>
  <div className="portal-hero wrap"><span className="overline">MOKRA / PLAYER SYSTEM</span><h1>YOUR<br/><em>IDENTITY.</em></h1><p>One player account. Your creature, settings, and VR connection.</p></div>
  <div className="wrap account-layout">
-  <aside className="portal-aside"><div className="aside-tag">IDENTITY SYSTEM / 001</div><div className="aside-orbit"><span className="aside-m">M✳</span></div><div className="aside-feature"><ShieldCheck size={23}/><div><b>SECURE LINKING</b><p>Your VR game uses a temporary code. Your password stays on the website.</p></div></div><div className="aside-feature"><Palette size={23}/><div><b>PERSONALIZE YOURSELF</b><p>Save fur colors and display names to your Neon account.</p></div></div></aside>
+  <aside className="portal-aside"><div className="aside-tag">IDENTITY SYSTEM / 001</div><div className="aside-orbit"><span className="aside-m">M?</span></div><div className="aside-feature"><ShieldCheck size={23}/><div><b>SECURE LINKING</b><p>Your VR game uses a temporary code. Your password stays on the website.</p></div></div><div className="aside-feature"><Palette size={23}/><div><b>PERSONALIZE YOURSELF</b><p>Save fur colors and display names to your Neon account.</p></div></div></aside>
   <section className="portal-panel">
    {serviceError&&<div className="mk-v6-service-error" role="alert"><ShieldCheck size={19}/><div><b>ACCOUNT CONNECTION ISSUE</b><p>{serviceError}</p><button type="button" onClick={()=>{setLoading(true);load()}}>Retry connection</button></div></div>}
    {loading?<div className="loading-box">CHECKING ACCOUNT SESSION...</div>:!user?
@@ -103,13 +116,14 @@ export default function Account(){
     </form><p className="panel-note">Keep your password private. Password recovery is not yet available.</p>
     </div>:
     <div className="dashboard"><div className="dashboard-top"><div><span className="panel-label">WELCOME TO YOUR ACCOUNT</span><h2>HEY, {user.username.toUpperCase()}.</h2><p>Your identity is ready for Mokra.</p></div><button className="outline-button" disabled={busy} onClick={logout}><LogOut size={16}/> SIGN OUT</button></div>
-    <div className="mk-v7-account-summary"><span>● Neon profile</span><span>Rainbow avatar ready</span><span>VR game linking</span></div>
+    <div className="mk-v7-account-summary"><span>? Neon profile</span><span>Rainbow avatar ready</span><span>VR game linking</span></div>
     <div className="stat-grid"><div><span>PLAYER LEVEL</span><b>{user.level}</b></div><div><span>TOTAL RUNS</span><b>{user.totalRuns}</b></div><div><span>SHARDS</span><b>{user.shards}</b></div></div>
     <div className="profile-grid"><div className="small-model"><Character color={color} variant="mini" rainbow={particleMode==='rainbow'} density={particleDensity}/><span>REAL 3D PLAYER MODEL</span></div><form className="stack" onSubmit={saveProfile}><span className="panel-label">02 / PROFILE</span><h3>MAKE IT YOURS.</h3><label>DISPLAY NAME <input required minLength={1} maxLength={32} value={name} onChange={e=>setName(e.target.value)}/></label><div className="color-title">FUR COLOR <span>{color.toUpperCase()}</span></div><div className="color-grid">{APPEARANCE_COLORS.map(item=><button key={item.value} type="button" aria-pressed={item.value===color} aria-label={'Choose '+item.name} title={item.name} className={'color-button '+(item.value===color?'chosen':'')} style={{background:item.value}} onClick={()=>setColor(item.value)}/>)}</div>
     <label className="mk-v6-custom-label">CUSTOM FUR COLOR <input aria-label="Choose a custom fur color" type="color" value={color} onChange={e=>setColor(e.target.value)}/></label>
-    <div className="mk-v6-account-controls"><span>PARTICLE EFFECT</span><div className="mk-v6-mode-row"><button type="button" aria-pressed={particleMode==='rainbow'} className={particleMode==='rainbow'?'chosen':''} onClick={()=>setParticleMode('rainbow')}>Rainbow</button><button type="button" aria-pressed={particleMode==='solid'} className={particleMode==='solid'?'chosen':''} onClick={()=>setParticleMode('solid')}>Solid</button></div><label>DOT DENSITY · {particleDensity}<input type="range" min="1" max="4" value={particleDensity} onChange={e=>setParticleDensity(Number(e.target.value))}/></label></div>
+    <div className="mk-v6-account-controls"><span>PARTICLE EFFECT</span><div className="mk-v6-mode-row"><button type="button" aria-pressed={particleMode==='rainbow'} className={particleMode==='rainbow'?'chosen':''} onClick={()=>setParticleMode('rainbow')}>Rainbow</button><button type="button" aria-pressed={particleMode==='solid'} className={particleMode==='solid'?'chosen':''} onClick={()=>setParticleMode('solid')}>Solid</button></div><label>DOT DENSITY � {particleDensity}<input type="range" min="1" max="4" value={particleDensity} onChange={e=>setParticleDensity(Number(e.target.value))}/></label></div>
     <button className="primary full" disabled={busy} type="submit">SAVE CHANGES <ArrowUpRight size={16}/></button></form></div>
-    <div className="dashboard-section"><span className="panel-label">03 / CONNECT YOUR GAME</span><h3>LINK YOUR HEADSET.</h3><p>Inside Mokra VR, choose Link Account to get an eight-character code. Enter that code below while signed in.</p><form className="link-form" onSubmit={linkGame}><label className="sr-only" htmlFor="pair-code">VR linking code</label><input id="pair-code" required maxLength={12} autoComplete="off" spellCheck={false} placeholder="8-CHARACTER CODE" value={code} onChange={e=>setCode(e.target.value.toUpperCase())}/><button type="submit" disabled={busy} className="primary">LINK DEVICE <Link2 size={17}/></button></form><p className="hint">Codes expire after 10 minutes. Never share your code with strangers.</p></div>
+    <div className="dashboard-section"><span className="panel-label">03 / CONNECT YOUR GAME</span><h3>LINK YOUR HEADSET.</h3><p>At the in-game computer, press ACCT, then 3 for Link Account. Press ENTER to get a code and enter it here.</p><form className="link-form" onSubmit={linkGame}><label className="sr-only" htmlFor="pair-code">VR linking code</label><input id="pair-code" required maxLength={12} autoComplete="off" spellCheck={false} placeholder="8-CHARACTER CODE" value={code} onChange={e=>setCode(e.target.value.toUpperCase())}/><button type="submit" disabled={busy} className="primary">LINK DEVICE <Link2 size={17}/></button></form><p className="hint">Codes expire after 10 minutes. Never share your code with strangers.</p></div>
+    <PlayFabAccount key={user.id} refresh={playFabRefresh}/>
     <div className="dashboard-section"><div className="section-title"><div><span className="panel-label">04 / CONNECTED DEVICES</span><h3>ACTIVE SESSIONS.</h3></div><button className="outline-button" type="button" onClick={load}><RefreshCw size={15}/> REFRESH</button></div>{sessions.length===0?<p>No connected VR devices yet. They appear here after the game finishes linking.</p>:<div className="sessions">{sessions.map(s=><div key={s.id} className="session"><div><Gamepad2 size={19}/><span><b>{s.device_name}</b><small>Linked {new Date(s.created_at).toLocaleDateString()}</small></span></div><button type="button" disabled={busy} onClick={()=>revoke(s.id)}>REVOKE</button></div>)}</div>}</div>
     <div className="dashboard-section mk-v6-security"><span className="panel-label">05 / SECURITY</span><h3>ACCOUNT SECURITY.</h3><p>Manage signed-in browsers or change your password to sign out all other website sessions.</p>{!passwordOpen?<button type="button" className="outline-button" onClick={()=>setPasswordOpen(true)}>CHANGE PASSWORD</button>:<form onSubmit={changePassword} className="stack"><label>CURRENT PASSWORD<input required type="password" autoComplete="current-password" value={oldPassword} onChange={e=>setOldPassword(e.target.value)}/></label><label>NEW PASSWORD<input required type="password" minLength={10} maxLength={128} autoComplete="new-password" value={newPassword} onChange={e=>setNewPassword(e.target.value)}/></label><div className="inline-actions"><button disabled={busy} className="primary" type="submit">UPDATE PASSWORD</button><button type="button" className="outline-button" onClick={()=>{setPasswordOpen(false);setOldPassword('');setNewPassword('')}}>CANCEL</button></div></form>}
       <div className="mk-v7-web-sessions">
@@ -128,5 +142,5 @@ export default function Account(){
    {message&&<div role="status" className="notice success"><CheckCircle2 size={18}/>{message}</div>}
    {error&&<div role="alert" className="notice error">{error}</div>}
   </section>
- </div><footer className="portal-footer wrap"><span>MOKRA / DEVELOPMENT ACCOUNT PORTAL</span><span><Link href="/privacy">PRIVACY</Link> · <Link href="/terms">TERMS</Link></span></footer></main>;
+ </div><footer className="portal-footer wrap"><span>MOKRA / DEVELOPMENT ACCOUNT PORTAL</span><span><Link href="/privacy">PRIVACY</Link> � <Link href="/terms">TERMS</Link></span></footer></main>;
 }
