@@ -37,7 +37,7 @@ const SURFACE_VERTEX = `
     vec4 mv=modelViewMatrix*vec4(p,1.0);
     gl_Position=projectionMatrix*mv;
     float scale = vFeature>0.5 ? .84 : 1.0;
-    gl_PointSize=clamp(uDotSize*scale/max(-mv.z,1.0)*(1.0+1.4*vHover),0.8,7.0);
+    gl_PointSize=clamp(uDotSize*scale/max(-mv.z,1.0)*(1.0+1.4*vHover),0.7,5.0);
   }
 `;
 const SURFACE_FRAGMENT = `
@@ -57,10 +57,10 @@ const SURFACE_FRAGMENT = `
     float core=1.0-smoothstep(.08,.32,radius);
     float halo=1.0-smoothstep(.18,.5,radius);
     vec3 color=mix(uBaseColor,spectrum(vHue),uSpectrum);
-    color *= vShade;
+    color *= (.35+.65*vShade);
     // Eyes and mouth are sampled from the user's real mesh, so their features remain legible.
-    if(vFeature>.5&&vFeature<1.5)color=vec3(.09);
-    if(vFeature>1.5)color=vec3(.24);
+    if(vFeature>.5&&vFeature<1.5)color=vec3(.025);
+    if(vFeature>1.5)color=vec3(.87);
     color=mix(color,vec3(1.),min(.8,vHover*.8));
     float a=(core*.82+halo*.24)*vSparkle;
     a*=1.0+vHover*.30;
@@ -206,7 +206,7 @@ function Stage({color,variant,rainbow=true,density=2,speaking=false,paused=false
           ?object.material.map(m=>m.name).join(' ')
           :String(object.material?.name||'');
         const identity=(String(object.name)+' '+materialName).toLowerCase();
-        const feature=/mouth|teeth|tongue/.test(identity)?2:/eye|pupil|cornea/.test(identity)?1:0;
+        const feature=/eye|pupil|cornea/.test(identity)?1:/mouth|teeth|tongue|face|muzzle|belly|chest|ear|skin/.test(identity)?2:0;
         object.userData.mokraFeature=feature;
         if(feature===2){
           const box=new THREE.Box3().setFromObject(object);
@@ -240,12 +240,12 @@ function Stage({color,variant,rainbow=true,density=2,speaking=false,paused=false
   },[onLoaded,onError]);
   const model=loaded;
   const points=useMemo(()=>model?samplePoints(model,
-    (variant==='assistant'?7200:variant==='mini'?12000:variant==='portrait'?21000:26000)*density
+    (variant==='assistant'?7200:variant==='mini'?12000:variant==='portrait'?36000:75000)*density
   ):null,[model,variant,density]);
   useEffect(()=>()=>points?.dispose(),[points]);
   const uniforms=useMemo(()=>({
     uTime:{value:0},uBaseColor:{value:new THREE.Color('#476bff')},
-    uSpectrum:{value:1},uDotSize:{value:15},
+    uSpectrum:{value:1},uDotSize:{value:10},
     uHoverPoint:fx.hover,uHoverStrength:fx.strength
   }),[fx]);
   useEffect(()=>{
@@ -273,7 +273,7 @@ function Stage({color,variant,rainbow=true,density=2,speaking=false,paused=false
     if(camera.isPerspectiveCamera && size.width>0 && size.height>0){
       const aspect=size.width/size.height;
       const fitWidth=5.85/(2*Math.tan(THREE.MathUtils.degToRad(camera.fov/2))*Math.max(.38,aspect));
-      const desiredDistance=variant==='assistant'?4.9:Math.max(8.2,fitWidth*1.09);
+      const desiredDistance=variant==='assistant'?4.9:variant==='hero'?Math.max(5.9,fitWidth*.88):Math.max(8.2,fitWidth*1.09);
       camera.position.z=THREE.MathUtils.damp(camera.position.z,desiredDistance,6,dt);
       camera.position.y=THREE.MathUtils.damp(camera.position.y,variant==='assistant'?.52:0,6,dt);
       camera.lookAt(0,variant==='assistant'?.52:0,0);
@@ -323,7 +323,7 @@ function Stage({color,variant,rainbow=true,density=2,speaking=false,paused=false
   </>;
 }
 
-export default function Character({color='#eeeeee',variant='hero',rainbow=false,density=2,speaking=false}) {
+export default function Character({color='#355bff',variant='hero',rainbow=false,density=2,speaking=false}) {
   const [reduced,setReduced]=useState(false);
   const [ready,setReady]=useState(false);
   const [loadError,setLoadError]=useState(false);
