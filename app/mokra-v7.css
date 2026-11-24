@@ -1,6 +1,6 @@
 /* MOKRA v7 — actual rainbow model, stars on every page, regular Sniglet text */
-html{background:#040817}
-body{background:#040817;color:#e9eeff;font-family:'Sniglet',system-ui,sans-serif;font-weight:400}
+html{background:#080808}
+body{background:#080808;color:#eeeeee;font-family:'Sniglet',system-ui,sans-serif;font-weight:400}
 :where(body) :is(p,li,label,small,input,textarea,select){font-family:'Sniglet',system-ui,sans-serif;font-weight:400!important}
 .mk-site :is(a,button,span),.portal-page :is(a,button,span),.legal-page :is(a,button,span){font-family:'Sniglet',system-ui,sans-serif;font-weight:400!important}
 .mk-site :is(h2,h3,h4,b,strong),.portal-page :is(h1,h2,h3,h4,b,strong),.legal-page :is(h1,h2,h3,h4,b,strong){font-family:'Sniglet',system-ui,sans-serif;font-weight:800!important}
@@ -9,64 +9,64 @@ body{background:#040817;color:#e9eeff;font-family:'Sniglet',system-ui,sans-serif
 .mk-site :is(.mk-nav a,.mk-nav button,.mk-blue-button,.mk-text-button),.portal-page :is(.primary,.outline-button,.back-link,.auth-switch button){font-weight:400!important}
 .mk-site .mk-pretitle,.mk-site .mk-kicker,.mk-site .mk-fine-print{letter-spacing:.12em;font-weight:400!important}
 .mk-global-stars{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:145;opacity:.86;isolation:isolate}
-.mk-global-stars:before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 24% 22%,#4a6bff0c,transparent 40%),radial-gradient(ellipse at 88% 76%,#ba60e90d,transparent 42%)}
-.mk-global-stars__star{position:absolute;display:block;border-radius:100%;background:#f5f9ff;box-shadow:0 0 5px 1px #bddaff92,0 0 15px 1px #8ab6ff33;animation:mkStarTwinkle 5s ease-in-out infinite alternate;will-change:opacity,transform}
-.mk-global-stars__star.cyan{background:#8aecff;box-shadow:0 0 8px #4ae7ffbb,0 0 24px #43a4ff55}
-.mk-global-stars__star.rose{background:#ffd7ef;box-shadow:0 0 9px #ff8ac8b7,0 0 20px #d96eff50}
+.mk-global-stars:before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 24% 22%,#6f6f6f0c,transparent 40%),radial-gradient(ellipse at 88% 76%,#7d7d7d0d,transparent 42%)}
+.mk-global-stars__star{position:absolute;display:block;border-radius:100%;background:#f9f9f9;box-shadow:0 0 5px 1px #d7d7d792,0 0 15px 1px #b2b2b233;animation:mkStarTwinkle 5s ease-in-out infinite alternate;will-change:opacity,transform}
+.mk-global-stars__star.cyan{background:#d9d9d9;box-shadow:0 0 8px #c7c7c7bb,0 0 24px #96969655}
+.mk-global-stars__star.rose{background:#e1e1e1;box-shadow:0 0 9px #a7a7a7b7,0 0 20px #8f8f8f50}
 @keyframes mkStarTwinkle{0%{opacity:.20;transform:scale(.75)}48%{opacity:.65;transform:scale(1.1)}100%{opacity:1;transform:scale(1.5)}}
-.mk-site{background:#040715;isolation:isolate}
-.mk-site .mk-hero{background:radial-gradient(ellipse at 50% 41%,#26286c74,transparent 44%),radial-gradient(ellipse at 40% 76%,#391c5440,transparent 56%),#030617}
-.mk-site .mk-movement{background:radial-gradient(ellipse at 75% 46%,#102e5290,transparent 62%),#050a1b}
-.mk-site .mk-threats{background:radial-gradient(ellipse at 82% 24%,#541a5c3f,transparent 55%),radial-gradient(ellipse at 25% 78%,#122b6555,transparent 59%),#050918}
-.mk-site .mk-locations{background:radial-gradient(ellipse at 15% 48%,#1b33654d,transparent 62%),#050819}
-.mk-site .mk-people{background:radial-gradient(ellipse at 68% 53%,#38185351,transparent 70%),#050816}
-.mk-site .mk-customize{background:radial-gradient(ellipse at 19% 46%,#112c705c,transparent 60%),#040919}
-.mk-site .mk-faq{background:radial-gradient(ellipse at 90% 70%,#1a2f5c45,transparent 55%),#070a18}
-.mk-site .mk-end{background:radial-gradient(ellipse at center,#181e584d,transparent 68%),#030613}
-.mk-site .mk-footer{background:#050916}
-.mk-site :is(.mk-location-card,.mk-feature-grid article){border:1px solid #8398ff24;background:linear-gradient(145deg,#1721499e,#0a0f2799);border-radius:19px;overflow:hidden;box-shadow:0 10px 40px #0003}
-.mk-site :is(.mk-location-card,.mk-feature-grid article):hover{border-color:#8aafff66;box-shadow:0 18px 47px #222c7b4b;transform:translateY(-4px)}
-.mk-site .mk-nav{background:#12182dbf;border-color:#879eff38}
-.mk-site .mk-hero-status span{background:#87aaff;box-shadow:0 0 16px #7495ffb5}
+.mk-site{background:#070707;isolation:isolate}
+.mk-site .mk-hero{background:radial-gradient(ellipse at 50% 41%,#2c2c2c74,transparent 44%),radial-gradient(ellipse at 40% 76%,#26262640,transparent 56%),#070707}
+.mk-site .mk-movement{background:radial-gradient(ellipse at 75% 46%,#2a2a2a90,transparent 62%),#0a0a0a}
+.mk-site .mk-threats{background:radial-gradient(ellipse at 82% 24%,#2b2b2b3f,transparent 55%),radial-gradient(ellipse at 25% 78%,#2a2a2a55,transparent 59%),#090909}
+.mk-site .mk-locations{background:radial-gradient(ellipse at 15% 48%,#3232324d,transparent 62%),#090909}
+.mk-site .mk-people{background:radial-gradient(ellipse at 68% 53%,#23232351,transparent 70%),#080808}
+.mk-site .mk-customize{background:radial-gradient(ellipse at 19% 46%,#2b2b2b5c,transparent 60%),#090909}
+.mk-site .mk-faq{background:radial-gradient(ellipse at 90% 70%,#2e2e2e45,transparent 55%),#0a0a0a}
+.mk-site .mk-end{background:radial-gradient(ellipse at center,#2121214d,transparent 68%),#060606}
+.mk-site .mk-footer{background:#090909}
+.mk-site :is(.mk-location-card,.mk-feature-grid article){border:1px solid #9b9b9b24;background:linear-gradient(145deg,#2222229e,#10101099);border-radius:19px;overflow:hidden;box-shadow:0 10px 40px #00000033}
+.mk-site :is(.mk-location-card,.mk-feature-grid article):hover{border-color:#adadad66;box-shadow:0 18px 47px #3030304b;transform:translateY(-4px)}
+.mk-site .mk-nav{background:#181818bf;border-color:#a0a0a038}
+.mk-site .mk-hero-status span{background:#a9a9a9;box-shadow:0 0 16px #969696b5}
 .mk-site .mk-hero-bottom{z-index:7}
-.mk-site .mk-real-model-mark{background:#0a1230c4;border:1px solid #a4a4ff36}
+.mk-site .mk-real-model-mark{background:#121212c4;border:1px solid #ababab36}
 .mk-site .mk-hero-model{pointer-events:none}
 .mk-site .mk-movement-model{pointer-events:none}
 .mk-site .mk-custom-model{pointer-events:none}
-.mk-site .mk-custom-model .mk-character,.portal-page .small-model .mk-character{filter:drop-shadow(0 0 21px #6d8eff52)}
-.mk-site .mk-location-card h3{color:#e4edff}
-.mk-site :is(.mk-threat-copy h3,.mk-people-intro h2) {text-shadow:0 1px 19px #6a91ff21}
-.mk-site .mk-nav-get{background:linear-gradient(125deg,#5b70ff,#b253fc)}
-.mk-site .mk-blue-button{background:linear-gradient(125deg,#637eff,#985ef2)}
-.portal-page{background:radial-gradient(ellipse at 17% 15%,#202d6354,transparent 54%),radial-gradient(ellipse at 80% 83%,#4a1c5942,transparent 64%),#050919}
-.portal-page .portal-panel,.portal-page .portal-aside{background:linear-gradient(148deg,#18264aee,#0e152deb);border:1px solid #6b81d047;box-shadow:0 24px 55px #0005}
+.mk-site .mk-custom-model .mk-character,.portal-page .small-model .mk-character{filter:drop-shadow(0 0 21px #8f8f8f52)}
+.mk-site .mk-location-card h3{color:#ececec}
+.mk-site :is(.mk-threat-copy h3,.mk-people-intro h2) {text-shadow:0 1px 19px #91919121}
+.mk-site .mk-nav-get{background:linear-gradient(125deg,#767676,#737373)}
+.mk-site .mk-blue-button{background:linear-gradient(125deg,#828282,#757575)}
+.portal-page{background:radial-gradient(ellipse at 17% 15%,#2e2e2e54,transparent 54%),radial-gradient(ellipse at 80% 83%,#2a2a2a42,transparent 64%),#090909}
+.portal-page .portal-panel,.portal-page .portal-aside{background:linear-gradient(148deg,#262626ee,#151515eb);border:1px solid #82828247;box-shadow:0 24px 55px #00000055}
 .portal-page .portal-panel{border-radius:26px}
-.portal-page :is(.stat-grid>div,.small-model,.session,.mk-v6-account-controls,.mk-v6-security){background:linear-gradient(135deg,#111b38,#0b1329);border:1px solid #6988ce4a;border-radius:16px}
-.portal-page :is(.primary,.auth-switch button.selected){background:linear-gradient(105deg,#547af2,#8b5cfc);color:white}
-.portal-page .stat-grid b{color:#b6c9ff}
-.portal-page .stack input:focus,.portal-page .link-form input:focus{border-color:#90abff;box-shadow:0 0 0 3px #6e8aff20}
+.portal-page :is(.stat-grid>div,.small-model,.session,.mk-v6-account-controls,.mk-v6-security){background:linear-gradient(135deg,#1b1b1b,#131313);border:1px solid #8686864a;border-radius:16px}
+.portal-page :is(.primary,.auth-switch button.selected){background:linear-gradient(105deg,#7b7b7b,#727272);color:white}
+.portal-page .stat-grid b{color:#c9c9c9}
+.portal-page .stack input:focus,.portal-page .link-form input:focus{border-color:#ababab;box-shadow:0 0 0 3px #8c8c8c20}
 .portal-page .dashboard-top{align-items:center}
 .portal-page .portal-aside{position:relative}
-.portal-page .aside-orbit{background:radial-gradient(circle,#6555c531,transparent 60%);box-shadow:0 0 45px #6e67ff12}
-.portal-page .back-link:hover{color:#acc7ff}
-.portal-page .portal-hero p{color:#b7c6e3}
-.portal-page .portal-hero h1 em{color:#80a3ff}
-.portal-page .portal-panel .panel-label{color:#8ab2ff}
-.portal-page .mk-v7-web-sessions{padding:18px;margin-top:22px;background:#070f25ad;border:1px solid #5a75bb55;border-radius:17px}
+.portal-page .aside-orbit{background:radial-gradient(circle,#60606031,transparent 60%);box-shadow:0 0 45px #73737312}
+.portal-page .back-link:hover{color:#c5c5c5}
+.portal-page .portal-hero p{color:#c5c5c5}
+.portal-page .portal-hero h1 em{color:#a2a2a2}
+.portal-page .portal-panel .panel-label{color:#afafaf}
+.portal-page .mk-v7-web-sessions{padding:18px;margin-top:22px;background:#0f0f0fad;border:1px solid #74747455;border-radius:17px}
 .portal-page .mk-v7-web-sessions header{display:flex;justify-content:space-between;align-items:center;gap:12px}
 .portal-page .mk-v7-web-sessions h4{font-size:19px;margin:0}
 .portal-page .mk-v7-web-sessions p{font-size:12px;line-height:1.6}
 .portal-page .mk-v7-web-sessions ul{list-style:none;padding:0;margin:12px 0;display:grid;gap:8px}
-.portal-page .mk-v7-web-sessions li{display:flex;align-items:center;justify-content:space-between;gap:12px;background:#121e3a;padding:12px;border-radius:12px}
+.portal-page .mk-v7-web-sessions li{display:flex;align-items:center;justify-content:space-between;gap:12px;background:#1d1d1d;padding:12px;border-radius:12px}
 .portal-page .mk-v7-web-sessions li div{display:grid;gap:4px}
 .portal-page .mk-v7-web-sessions li small{opacity:.72}
-.portal-page .mk-v7-web-sessions button{border:1px solid #92aaff66;background:#1c305b;color:#f1f6ff;border-radius:10px;padding:9px 12px;font-size:12px}
-.portal-page .mk-v7-web-sessions .current{color:#8ddcbb;font-size:11px}
+.portal-page .mk-v7-web-sessions button{border:1px solid #ababab66;background:#2f2f2f;color:#f6f6f6;border-radius:10px;padding:9px 12px;font-size:12px}
+.portal-page .mk-v7-web-sessions .current{color:#c9c9c9;font-size:11px}
 .portal-page .mk-v7-account-summary{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:12px 0 20px}
-.portal-page .mk-v7-account-summary span{padding:8px 13px;background:#101c3c;border:1px solid #6c8aff47;color:#c4d7ff;border-radius:99px;font-size:12px}
-.portal-page .mk-v7-account-summary span:nth-child(2){border-color:#ab81e777;color:#e0c7ff}
-.portal-page .mk-v7-account-summary span:nth-child(3){border-color:#71ccbd77;color:#b4f1dd}
-.portal-page .portal-panel .primary:hover{box-shadow:0 0 22px #655bfc50}
+.portal-page .mk-v7-account-summary span{padding:8px 13px;background:#1c1c1c;border:1px solid #8c8c8c47;color:#d6d6d6;border-radius:99px;font-size:12px}
+.portal-page .mk-v7-account-summary span:nth-child(2){border-color:#91919177;color:#d0d0d0}
+.portal-page .mk-v7-account-summary span:nth-child(3){border-color:#b8b8b877;color:#e3e3e3}
+.portal-page .portal-panel .primary:hover{box-shadow:0 0 22px #69696950}
 @media(max-width:760px){
   .mk-global-stars{opacity:.75}
   .mk-site :is(.mk-feature-grid article,.mk-location-card){border-radius:14px}
