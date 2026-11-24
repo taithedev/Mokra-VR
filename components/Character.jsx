@@ -20,6 +20,7 @@ const SURFACE_VERTEX = `
   varying float vHover;
   varying float vFeature;
   varying float vSparkle;
+  varying float vShade;
   void main() {
     vec3 p = position;
     vec3 wp = (modelMatrix * vec4(p, 1.0)).xyz;
@@ -30,11 +31,13 @@ const SURFACE_VERTEX = `
     p.y += .003 * cos(uTime*1.5+aRandom*49.0);
     vHue = fract(.18 * wp.y + .11 * uTime);
     vFeature = aFeature;
+    vec3 n = normalize(normalMatrix * aNormal);
+    vShade = .20 + .80 * max(0.0,dot(n,normalize(vec3(-.35,.65,1.0))));
     vSparkle = .78 + .22 * sin(uTime*2.8 + aRandom*39.0);
     vec4 mv=modelViewMatrix*vec4(p,1.0);
     gl_Position=projectionMatrix*mv;
     float scale = vFeature>0.5 ? .84 : 1.0;
-    gl_PointSize=clamp(uDotSize*scale/max(-mv.z,1.0)*(1.0+2.9*vHover),1.5,15.0);
+    gl_PointSize=clamp(uDotSize*scale/max(-mv.z,1.0)*(1.0+1.4*vHover),0.8,7.0);
   }
 `;
 const SURFACE_FRAGMENT = `
@@ -44,6 +47,7 @@ const SURFACE_FRAGMENT = `
   varying float vHover;
   varying float vFeature;
   varying float vSparkle;
+  varying float vShade;
   vec3 spectrum(float h){
     return .19 + .81 * clamp(abs(fract(h+vec3(0.,.666667,.333333))*6.-3.)-1.,0.,1.);
   }
@@ -53,10 +57,11 @@ const SURFACE_FRAGMENT = `
     float core=1.0-smoothstep(.08,.32,radius);
     float halo=1.0-smoothstep(.18,.5,radius);
     vec3 color=mix(uBaseColor,spectrum(vHue),uSpectrum);
+    color *= vShade;
     // Eyes and mouth are sampled from the user's real mesh, so their features remain legible.
-    if(vFeature>.5&&vFeature<1.5)color=vec3(.28,.43,.74);
-    if(vFeature>1.5)color=vec3(.93,.44,.67);
-    color=mix(color,vec3(1.,.97,1.),min(.8,vHover*.8));
+    if(vFeature>.5&&vFeature<1.5)color=vec3(.09);
+    if(vFeature>1.5)color=vec3(.24);
+    color=mix(color,vec3(1.),min(.8,vHover*.8));
     float a=(core*.82+halo*.24)*vSparkle;
     a*=1.0+vHover*.30;
     gl_FragColor=vec4(color*(1.20+vHover*.65),min(a,1.0));
@@ -129,6 +134,7 @@ function samplePoints(source,count=40000) {
     normalMatrix.getNormalMatrix(part.obj.matrixWorld);
     surfaceNormal.applyMatrix3(normalMatrix).normalize();
     point.applyMatrix4(part.obj.matrixWorld);
+    point.addScaledVector(surfaceNormal,.009);
     const index=i*3;
     position[index]=point.x;position[index+1]=point.y;position[index+2]=point.z;
     normal[index]=surfaceNormal.x;normal[index+1]=surfaceNormal.y;normal[index+2]=surfaceNormal.z;
@@ -170,7 +176,7 @@ function TalkingMouth({anchor,speaking,paused}){
     mouth.current.scale.set(.13,.008+.16*opening.current,1);
   });
   return <points ref={mouth} geometry={geometry} position={anchor} visible={false} renderOrder={7}>
-    <pointsMaterial color="#f5b5da" size={.042} sizeAttenuation transparent opacity={.95} depthWrite={false} blending={THREE.AdditiveBlending}/>
+    <pointsMaterial color="#eeeeee" size={.042} sizeAttenuation transparent opacity={.95} depthWrite={false} blending={THREE.AdditiveBlending}/>
   </points>;
 }
 
@@ -211,10 +217,11 @@ function Stage({color,variant,rainbow=true,density=2,speaking=false,paused=false
         }
         // Hide the original triangles in the color/depth buffers, but retain their
         // exact geometry for raycasting and surface-sampling. No copied/ripped GILLA mesh.
+        object.renderOrder=-10;
         object.castShadow=false;
         object.receiveShadow=false;
         object.material=new THREE.MeshBasicMaterial({
-          colorWrite:false,depthWrite:false,side:THREE.DoubleSide
+          colorWrite:false,depthWrite:true,side:THREE.FrontSide
         });
       });
       if(mouthBounds){
@@ -238,7 +245,7 @@ function Stage({color,variant,rainbow=true,density=2,speaking=false,paused=false
   useEffect(()=>()=>points?.dispose(),[points]);
   const uniforms=useMemo(()=>({
     uTime:{value:0},uBaseColor:{value:new THREE.Color('#476bff')},
-    uSpectrum:{value:1},uDotSize:{value:24},
+    uSpectrum:{value:1},uDotSize:{value:15},
     uHoverPoint:fx.hover,uHoverStrength:fx.strength
   }),[fx]);
   useEffect(()=>{
@@ -307,7 +314,7 @@ function Stage({color,variant,rainbow=true,density=2,speaking=false,paused=false
       {model&&<primitive object={model}/>}
       {model&&variant==='assistant'&&<TalkingMouth anchor={mouthAnchor} speaking={speaking} paused={paused}/>}
       {points&&<points geometry={points} frustumCulled={false}>
-        <shaderMaterial ref={dots} uniforms={uniforms} vertexShader={SURFACE_VERTEX} fragmentShader={SURFACE_FRAGMENT} transparent depthWrite={false} blending={THREE.AdditiveBlending}/>
+        <shaderMaterial ref={dots} uniforms={uniforms} vertexShader={SURFACE_VERTEX} fragmentShader={SURFACE_FRAGMENT} transparent depthWrite={true} blending={THREE.NormalBlending}/>
       </points>}
     </group>
     {glowTexture && <sprite ref={halo} visible={false} renderOrder={15}>
@@ -316,7 +323,7 @@ function Stage({color,variant,rainbow=true,density=2,speaking=false,paused=false
   </>;
 }
 
-export default function Character({color='#476bff',variant='hero',rainbow=true,density=2,speaking=false}) {
+export default function Character({color='#eeeeee',variant='hero',rainbow=false,density=2,speaking=false}) {
   const [reduced,setReduced]=useState(false);
   const [ready,setReady]=useState(false);
   const [loadError,setLoadError]=useState(false);
@@ -326,7 +333,7 @@ export default function Character({color='#476bff',variant='hero',rainbow=true,d
     sync();q.addEventListener?.('change',sync);
     return ()=>q.removeEventListener?.('change',sync);
   },[]);
-  return <div className={'mk-character mk-character--'+variant} role="img" aria-label="The real Mokra Monki player model rendered entirely as thousands of glowing rainbow dots with cursor hover effects">
+  return <div className={'mk-character mk-character--'+variant} role="img" aria-label="The real Mokra Monki player model rendered entirely as thousands of shaded surface particles with cursor hover effects">
     <Canvas dpr={variant==='assistant'?[1,1.25]:[1,1.5]} gl={{alpha:true,antialias:true,powerPreference:'high-performance'}} camera={{position:[0,.18,8.8],fov:39}} frameloop="always">
       <Stage color={color} variant={variant} rainbow={rainbow} density={density} speaking={speaking} paused={reduced} onLoaded={setReady} onError={setLoadError}/>
     </Canvas>
